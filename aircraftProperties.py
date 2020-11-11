@@ -1,4 +1,4 @@
-class aircraftProperties:
+class AircraftProperties:
     Weight = {
         "MTOW": 2014954.46240041,  # $N$
         "OEW": 891618.429884555,  # $N$
@@ -28,7 +28,7 @@ class aircraftProperties:
     }
     Airfoil = {
         "t/c": 14.22,  # $\%$
-        "airfoil identifier": 20714  # -
+        "airfoil identifier": "NASA20714"  # -
     }
     Aileron = {
         "span fract of wingspan": 0.28,  # -
