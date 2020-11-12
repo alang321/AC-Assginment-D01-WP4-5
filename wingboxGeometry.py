@@ -3,6 +3,7 @@ import matplotlib
 from aircraftProperties import AircraftProperties
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from shapely import geometry
 
 
 class WingboxGeometry:
@@ -14,6 +15,8 @@ class WingboxGeometry:
 
         self.airfoilData = self.parseAirfoilData()
 
+        self.wingboxPolygon = geometry.Polygon(self.edgeCoordinates())
+
     # uses the forward and aft spar as fraction of chord, returns the coordinates of the wing box edges as a fraction of the chord in a list of tuples,
     def edgeCoordinates(self):
         coordinates = []
@@ -21,6 +24,10 @@ class WingboxGeometry:
             for intersection in self.intersection(spar):
                 coordinates.append([spar, intersection])
         return coordinates
+
+    # calculate the centroid and returns it ass coordinate
+    def calculateCentroid(self):
+        return self.wingboxPolygon.centroid
 
     def drawWingbox(self):
         #plot top and bottom line
