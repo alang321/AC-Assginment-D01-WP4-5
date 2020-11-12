@@ -100,3 +100,6 @@ class AircraftProperties:
     Fuel_volume = {
         "total fuel volume required": 88.898  # $m^3$
     }
+    Cruise_constants = {
+        "mach at cruise": 0.77
+    }
