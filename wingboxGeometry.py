@@ -1,8 +1,7 @@
-import matplotlib
-
 from aircraftProperties import AircraftProperties
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+from shapely import geometry
 
 
 class WingboxGeometry:
@@ -14,13 +13,29 @@ class WingboxGeometry:
 
         self.airfoilData = self.parseAirfoilData()
 
+        self.wingboxPolygon = geometry.Polygon(self.edgeCoordinates())
+
     # uses the forward and aft spar as fraction of chord, returns the coordinates of the wing box edges as a fraction of the chord in a list of tuples,
     def edgeCoordinates(self):
         coordinates = []
         for spar in self.spars:
             for intersection in self.intersection(spar):
                 coordinates.append([spar, intersection])
+        coordinates[3], coordinates[2] = coordinates[2], coordinates[3] # switch some coords so they are in the correct order
         return coordinates
+
+    # calculate the centroid and returns it ass coordinate
+    def calculateCentroid(self):
+        return [self.wingboxPolygon.centroid.x, self.wingboxPolygon.centroid.y]
+
+    # calculate the area enclosed by wingbox in terms of chord
+    def calculateEnclArea(self):
+        coords = self.edgeCoordinates()
+        fwdspar = coords[0][1] - coords[1][1]
+        bckspar = coords[3][1] - coords[2][1]
+        lengwingbox = coords[2][0] - coords[0][0]
+        A_m = 0.5*lengwingbox*(fwdspar + bckspar)
+        return A_m
 
     def drawWingbox(self):
         #plot top and bottom line
@@ -29,10 +44,12 @@ class WingboxGeometry:
 
         #plot wingbox
         coord = self.edgeCoordinates()
-        coord[3], coord[2] = coord[2], coord[3] # switch some coords so they are in the correct order
         coord.append(coord[0])  # repeat the first point to create a 'closed loop'
         xs, ys = zip(*coord)  # create lists of x and y values
         plt.plot(xs, ys, color="red")
+
+        #draw centroid
+        plt.plot(self.wingboxPolygon.centroid.x, self.wingboxPolygon.centroid.y, marker='o', color='r', ls='')
 
         #x, y ranges and same scale
         plt.xlim(-0.1, 1.1)
@@ -74,6 +91,3 @@ class WingboxGeometry:
                 data[index][1].append(float(splitline[1]))
 
         return data
-
-
-
