@@ -29,6 +29,10 @@ class WingboxGeometry:
     def calculateCentroid(self):
         return self.wingboxPolygon.centroid
 
+    # calculate the area enclosed by wingbox in terms of chord
+    def calculateEnclArea(self):
+        return self.wingboxPolygon.area
+
     def drawWingbox(self):
         #plot top and bottom line
         plt.plot(self.airfoilData[0][0], self.airfoilData[0][1], color="blue")
