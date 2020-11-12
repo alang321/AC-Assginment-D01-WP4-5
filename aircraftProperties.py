@@ -7,7 +7,8 @@ class AircraftProperties:
         "design fuel fraction": 0.309146329830603,  # $N$
         "primary components of OEW": 80.4532673513519,  # %
         "secondary components of OEW": 8.95422584993104,  # %
-        "tertiary components of OEW": 10.5925067987171  # %
+        "tertiary components of OEW": 10.5925067987171,  # %
+        "payload at harmonic profile": 66000 * 9.81  # $N$
     }
     Planform = {
         "surface area": 362.728076039678,  # $m^{2}$
@@ -99,4 +100,11 @@ class AircraftProperties:
     }
     Fuel_volume = {
         "total fuel volume required": 88.898  # $m^3$
+    }
+    Cruise_constants = {
+        "cruise altitude": 9448,             # $m$
+        "mach at cruise": 0.77,
+        "Temp at cruise": 226.738,  # $C$
+        "speed of sound at cruise": 301.833 # $ms^{-1}$
+        "cruise velocity": 232.412 # $ms^{-1}$
     }
