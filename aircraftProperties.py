@@ -107,6 +107,6 @@ class AircraftProperties:
         "Temp at cruise": 226.738,  # $C$
         "speed of sound at cruise": 301.833, # $ms^{-1}$
         "cruise velocity": 232.412, # $ms^{-1}$
-        "density at cruise": 0.4436323254
+        "density at cruise": 0.4436323254,
+        "cruise velocity": 232.412 # $ms^{-1}$
     }
-    
