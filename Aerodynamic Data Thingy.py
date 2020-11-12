@@ -91,5 +91,4 @@ for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
    X.append(i)
    Y.append(Cm_dacc(i))
 
-plt.plot(X, Y, color="red")
 plt.show()
