@@ -3,6 +3,7 @@ import scipy as sp
 from scipy import interpolate
 import matplotlib.pyplot as plt
 from aircraftProperties import AircraftProperties
+import math
 
 rawdata0 = np.genfromtxt("data/MainWing_a=0.00_v=10.00ms.txt", skip_header=40, max_rows=19)
 rawdata0 = rawdata0.T
