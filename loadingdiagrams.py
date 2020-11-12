@@ -5,13 +5,13 @@ from aircraftProperties import AircraftProperties
 #altitudes [m]
 h_0 = 0         #sea level 
 h_1 =   2       # ????
-h_c = 9448      #altitude at cruise 
+h_c = AircraftProperties.Cruise_constants["cruise altitude"]   #altitude at cruise 
 
 #weights [N]
-W_pl = 66000 * 9.81                         #weight payload 
+MTOW = AircraftProperties.Weight["MTOW"]    #maximum takeoff weight
+W_pl = AircraftProperties.Weight["payload at harmonic profile"]                #weight payload 
 OEW = AircraftProperties.Weight["OEW"]      #operating empty weight
 ZFW = OEW + W_pl                            #zero fuel weight
-MTOW = AircraftProperties.Weight["MTOW"]    #maximum takeoff weight
 
 #V_s0 =  
 #V_s1 = 
@@ -19,5 +19,5 @@ MTOW = AircraftProperties.Weight["MTOW"]    #maximum takeoff weight
 #V_C = 
 #V_D = 
 
-print(OEW)
+print(h_c)
 
