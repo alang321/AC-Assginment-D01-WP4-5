@@ -18,7 +18,7 @@ class WingboxGeometry:
     def edgeCoordinates(self):
         coordinates = []
         for spar in self.spars:
-            for intersection in WingboxGeometry.intersection(spar):
+            for intersection in self.intersection(spar):
                 coordinates.append([spar, intersection])
         return coordinates
 
@@ -29,7 +29,7 @@ class WingboxGeometry:
 
         #plot wingbox
         coord = self.edgeCoordinates()
-        coord[3], coord[2] = coord[2], coord[3]
+        coord[3], coord[2] = coord[2], coord[3] # switch some coords so they are in the correct order
         coord.append(coord[0])  # repeat the first point to create a 'closed loop'
         xs, ys = zip(*coord)  # create lists of x and y values
         plt.plot(xs, ys, color="red")
@@ -42,11 +42,9 @@ class WingboxGeometry:
         plt.show()
 
     #return the intersection of both the upper surface and the lower surface at specified location
-    @staticmethod
-    def intersection(location):
-        data = WingboxGeometry.parseAirfoilData()
-        f_upper = interp1d(data[0][0], data[0][1])
-        f_lower = interp1d(data[1][0], data[1][1])
+    def intersection(self, location):
+        f_upper = interp1d(self.airfoilData[0][0], self.airfoilData[0][1])
+        f_lower = interp1d(self.airfoilData[1][0], self.airfoilData[1][1])
 
         return float(f_upper(location)), float(f_lower(location))
 
