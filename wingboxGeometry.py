@@ -30,7 +30,12 @@ class WingboxGeometry:
 
     # calculate the area enclosed by wingbox in terms of chord
     def calculateEnclArea(self):
-        return self.wingboxPolygon.area
+        coords = self.edgeCoordinates()
+        fwdspar = coords[0][1] - coords[1][1]
+        bckspar = coords[3][1] - coords[2][1]
+        lengwingbox = coords[2][0] - coords[0][0]
+        A_m = 0.5*lengwingbox*(fwdspar + bckspar)
+        return A_m
 
     def drawWingbox(self):
         #plot top and bottom line
