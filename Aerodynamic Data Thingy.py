@@ -63,7 +63,7 @@ Momentacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["
 # Distribution at random AoA / Coeff
 CL_0 = 0.430299
 CL_10 = 1.252323
-CL_d = 100  # Desired distribution for this coefficcient
+CL_d = 2.0  # Desired distribution for this coefficcient
 CL_dList = []
 for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
     CL_dList.append(Liftacc(i) + ((CL_d-CL_0)/(CL_10-CL_0))*(Liftacc10(i)-Liftacc(i)))
@@ -85,10 +85,17 @@ for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
     Cm_dList.append(Momentacc(i) + ((Cm_d-Cm_0)/(Cm_10-Cm_0))*(Momentacc10(i)-Momentacc(i)))
 Cm_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Cm_dList, kind='cubic', fill_value="extrapolate")
 
-X = []
-Y = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
-   X.append(i)
-   Y.append(Cm_dacc(i))
+#calculation AoA
+AoA=math.degrees(math.asin(((CL_d-CL_0)/(CL_10-CL_0)) * math.sin(math.radians(10))))
 
-plt.show()
+print(AoA)
+
+
+# X = []
+# Y = []
+# for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
+#    X.append(i)
+#    Y.append(Cm_dacc(i))
+
+# plt.plot(X, Y, color="red")
+# plt.show()
