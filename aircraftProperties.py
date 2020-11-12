@@ -109,7 +109,4 @@ class AircraftProperties:
         "cruise velocity": 232.412, # $ms^{-1}$
         "density at cruise": 0.4436323254
     }
-    Lift = {
-        "CL max with flaps": 2.62,
-        "CL max without flaps": 1.631
-        }
+    
