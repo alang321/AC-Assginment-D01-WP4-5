@@ -1,5 +1,3 @@
-import matplotlib
-
 from aircraftProperties import AircraftProperties
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
@@ -23,6 +21,7 @@ class WingboxGeometry:
         for spar in self.spars:
             for intersection in self.intersection(spar):
                 coordinates.append([spar, intersection])
+        coordinates[3], coordinates[2] = coordinates[2], coordinates[3] # switch some coords so they are in the correct order
         return coordinates
 
     # calculate the centroid and returns it ass coordinate
@@ -36,10 +35,12 @@ class WingboxGeometry:
 
         #plot wingbox
         coord = self.edgeCoordinates()
-        coord[3], coord[2] = coord[2], coord[3] # switch some coords so they are in the correct order
         coord.append(coord[0])  # repeat the first point to create a 'closed loop'
         xs, ys = zip(*coord)  # create lists of x and y values
         plt.plot(xs, ys, color="red")
+
+        #draw centroid
+        #plt.scatter(self.wingboxPolygon.centroid[0], self.wingboxPolygon.centroid[1], style='bx', label='point')
 
         #x, y ranges and same scale
         plt.xlim(-0.1, 1.1)
@@ -81,6 +82,3 @@ class WingboxGeometry:
                 data[index][1].append(float(splitline[1]))
 
         return data
-
-
-
