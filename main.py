@@ -4,6 +4,10 @@ from wingboxGeometry import WingboxGeometry
 
 print(AircraftProperties.Fuselage["Fuselage length"])
 
-a = WingboxGeometry(0.15, 0.6)
+wingbox = WingboxGeometry(forwardSpar=0.15, aftSpar=0.6)
+test = WingboxGeometry(forwardSpar=0.087654, aftSpar=0.8)
 
-print(a.edgeCoordinates())
+print(wingbox.edgeCoordinates())
+
+wingbox.drawWingbox()
+test.drawWingbox()
