@@ -26,7 +26,7 @@ class WingboxGeometry:
 
     # calculate the centroid and returns it ass coordinate
     def calculateCentroid(self):
-        return self.wingboxPolygon.centroid
+        return [self.wingboxPolygon.centroid.x, self.wingboxPolygon.centroid.y]
 
     def drawWingbox(self):
         #plot top and bottom line
@@ -40,7 +40,7 @@ class WingboxGeometry:
         plt.plot(xs, ys, color="red")
 
         #draw centroid
-        #plt.scatter(self.wingboxPolygon.centroid[0], self.wingboxPolygon.centroid[1], style='bx', label='point')
+        plt.plot(self.wingboxPolygon.centroid.x, self.wingboxPolygon.centroid.y, marker='o', color='r', ls='')
 
         #x, y ranges and same scale
         plt.xlim(-0.1, 1.1)
