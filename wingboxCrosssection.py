@@ -64,6 +64,10 @@ class WingboxCrossection:
     # calculate the centroid and returns it ass coordinate
     def calculateStringerLocations(self):
         coordinateList = []
+        coords = self.edgeCoordinates()
+        x = coords[3][0]-coords[0][0]
+        dx = x/(self.numStringerTop-1)
+        
         return coordinateList
 
     # calculate the area enclosed by wingbox in terms of chord
