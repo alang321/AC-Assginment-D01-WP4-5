@@ -104,5 +104,14 @@ class AircraftProperties:
     Cruise_constants = {
         "cruise altitude": 9448,             # $m$
         "mach at cruise": 0.77,
-        "Temp at cruise": 273.15-(0.0065*9448)  # $C$
+        "Temp at cruise": 226.738,  # $C$
+        "speed of sound at cruise": 301.833, # $ms^{-1}$
+        "cruise velocity": 232.412, # $ms^{-1}$
+        "density at cruise": 0.4436323254,
+        "cruise velocity": 232.412 # $ms^{-1}$
     }
+    Lift = {
+        "CL max with flaps": 2.62,
+        "CL max without flaps": 1.631
+        }
+
