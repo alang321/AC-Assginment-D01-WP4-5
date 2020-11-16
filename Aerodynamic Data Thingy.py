@@ -109,6 +109,8 @@ for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
 plt.plot(X, Y0, color="red")
 plt.plot(X, Y10, color="blue")
 plt.plot(X, Yd, color="green")
+plt.xlabel("Span Position")
+plt.ylabel("Moment")
 
 plt.subplot(221)
 X = []
@@ -123,6 +125,7 @@ for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
 plt.plot(X, Y0, color="red")
 plt.plot(X, Y10, color="blue")
 plt.plot(X, Yd, color="green")
+plt.ylabel("Lift")
 
 plt.subplot(222)
 X = []
@@ -137,4 +140,7 @@ for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
 plt.plot(X, Y0, color="red")
 plt.plot(X, Y10, color="blue")
 plt.plot(X, Yd, color="green")
+plt.xlabel("Span Position")
+plt.ylabel("Drag")
+
 plt.show()
