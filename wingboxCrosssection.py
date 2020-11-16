@@ -48,7 +48,7 @@ class WingboxCrossection:
         return centroid
 
     # calculate the centroid and returns it ass coordinate
-    def calculateinertia(self):
+    def calculateInertia(self):
         inertia = 0
         return inertia
 
