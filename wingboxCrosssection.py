@@ -1,6 +1,7 @@
 from aircraftProperties import AircraftProperties
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class WingboxCrossection:
@@ -49,8 +50,13 @@ class WingboxCrossection:
 
     # calculate the centroid and returns it ass coordinate
     def calculateInertia(self):
-        inertia = 0
+        inertia = 0 #m^4
 
+
+
+        #tilted rectanlge
+        #vertical
+        #for each stringer
 
 
         return inertia
@@ -96,6 +102,18 @@ class WingboxCrossection:
         f_lower = interp1d(self.airfoilData[1][0], self.airfoilData[1][1])
 
         return float(f_upper(location)), float(f_lower(location))
+
+    @staticmethod #calculate the angle between a line defined by 2 coordinates and the x axis
+    def calculateAngleLineHorizontal(coord1, coord2):
+        return np.arctan((coord2[1]-coord1[1])/(coord2[0]-coord1[0]))
+
+    @staticmethod #calculate the intersection of a line defined by 2 coordinates and a x coordinate
+    def calculateYValueAtXofLine(coord1, coord2, x):
+        # linear function: kx+d
+        k = (coord2[1]-coord1[1])/(coord2[0]-coord1[0])
+        d = coord1[1] - k * coord1[0]
+
+        return k*x+d
 
     @staticmethod
     def parseAirfoilData():
