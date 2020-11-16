@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 class WingboxCrossection:
 
-    def __init__(self, chordLength, forwardSpar, aftSpar, numStringerTop, numStringersBottom, sidewallThickness, inertiaOfStringer): # sidewall thickness = [top, right, bottom, left]
+    def __init__(self, chordLength, forwardSpar, aftSpar, numStringerTop, numStringersBottom, sidewallThickness, stringerInertia, stringerArea): # sidewall thickness = [top, right, bottom, left]
         self.chordLength = chordLength
         self.numStringerTop = numStringerTop
         self.numStringersBottom = numStringersBottom
@@ -50,6 +50,9 @@ class WingboxCrossection:
     # calculate the centroid and returns it ass coordinate
     def calculateInertia(self):
         inertia = 0
+
+
+
         return inertia
 
     # calculate the centroid and returns it ass coordinate
