@@ -87,7 +87,7 @@ class WingboxCrossection:
         plt.plot(xs, ys, color="red")
 
         #draw centroid
-        plt.plot(self.wingboxPolygon.centroid.x, self.wingboxPolygon.centroid.y, marker='o', color='r', ls='')
+        plt.plot(self.centroid[0], self.centroid[1], marker='o', color='r', ls='')
 
         #x, y ranges and same scale
         plt.xlim(-0.1, 1.1)
