@@ -19,7 +19,7 @@ class WingboxCrossection:
 
         self.airfoilData = self.parseAirfoilData()
 
-        self.wingboxEdgeCordinates = self.edgeCoordinates()
+        self.wingboxCornerCordinates = self.cornerCoordinates()
 
         self.stringerLocations = self.stringerLocations()
 
@@ -33,8 +33,8 @@ class WingboxCrossection:
 
 
 
-    # uses the forward and aft spar as fraction of chord, returns the coordinates of the wing box edges as a fraction of the chord in a list of tuples,
-    def edgeCoordinates(self):
+    # uses the forward and aft spar as fraction of chord, returns the coordinates of the wing box corners as a fraction of the chord in a list of tuples,
+    def cornerCoordinates(self):
         coordinates = []
         for spar in self.spars:
             for intersection in self.intersection(spar):
@@ -72,7 +72,7 @@ class WingboxCrossection:
         plt.plot(self.airfoilData[1][0], self.airfoilData[1][1], color="blue")
 
         #plot wingbox
-        coord = self.edgeCoordinates()
+        coord = self.cornerCoordinates()
         coord.append(coord[0])  # repeat the first point to create a 'closed loop'
         xs, ys = zip(*coord)  # create lists of x and y values
         plt.plot(xs, ys, color="red")
