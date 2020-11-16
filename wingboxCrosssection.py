@@ -1,13 +1,14 @@
 from aircraftProperties import AircraftProperties
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from shapely import geometry
 
 
 class WingboxCrossection:
 
     def __init__(self, chordLength, forwardSpar, aftSpar, numStringerTop, numStringersBottom, sidewallThickness, inertiaOfStringer): # sidewall thickness = [top, right, bottom, left]
         self.chordLength = chordLength
+        self.numStringerTop = numStringerTop
+        self.numStringersBottom = numStringersBottom
 
         self.forwardSpar = forwardSpar
         self.aftSpar = aftSpar
@@ -19,16 +20,15 @@ class WingboxCrossection:
         self.airfoilData = self.parseAirfoilData()
 
         self.wingboxEdgeCordinates = self.edgeCoordinates()
-        self.wingboxPolygon = geometry.Polygon(self.edgeCoordinates())
 
         self.stringerLocations = self.stringerLocations()
 
         #section Properties
         self.enclosedArea = self.calculateEnclArea()
         self.centroid = self.calculateCentroid()
-        self.ixx = self.inertia() #horizontal
-        self.izz = self.inertia() #vertical
-        self.iyy = self.inertia() #polar
+        self.ixx = self.calculateInertia() #horizontal
+        self.izz = self.calculateInertia() #vertical
+        self.iyy = self.calculateInertia() #polar
 
 
 
