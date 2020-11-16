@@ -4,29 +4,58 @@ import matplotlib.pyplot as plt
 from shapely import geometry
 
 
-class WingboxGeometry:
+class WingboxCrossection:
 
-    def __init__(self, forwardSpar, aftSpar):
+    def __init__(self, chordLength, forwardSpar, aftSpar, numStringerTop, numStringersBottom, sidewallThickness, inertiaOfStringer): # sidewall thickness = [top, right, bottom, left]
+        self.chordLength = chordLength
+
         self.forwardSpar = forwardSpar
         self.aftSpar = aftSpar
+        self.forwardSparAbsolute = forwardSpar * chordLength #m
+        self.aftSparAbsolute = aftSpar * chordLength #m
         self.spars = [self.forwardSpar, self.aftSpar]
+        self.sparsAbsolute = [self.forwardSparAbsolute, self.aftSparAbsolute] # m
 
         self.airfoilData = self.parseAirfoilData()
 
+        self.wingboxEdgeCordinates = self.edgeCoordinates()
         self.wingboxPolygon = geometry.Polygon(self.edgeCoordinates())
+
+        self.stringerLocations = self.stringerLocations()
+
+        #section Properties
+        self.enclosedArea = self.calculateEnclArea()
+        self.centroid = self.calculateCentroid()
+        self.ixx = self.inertia() #horizontal
+        self.izz = self.inertia() #vertical
+        self.iyy = self.inertia() #polar
+
+
+
 
     # uses the forward and aft spar as fraction of chord, returns the coordinates of the wing box edges as a fraction of the chord in a list of tuples,
     def edgeCoordinates(self):
         coordinates = []
         for spar in self.spars:
             for intersection in self.intersection(spar):
-                coordinates.append([spar, intersection])
+                coordinates.append([spar * self.chordLength, intersection * self.chordLength])
         coordinates[3], coordinates[2] = coordinates[2], coordinates[3] # switch some coords so they are in the correct order
         return coordinates
 
     # calculate the centroid and returns it ass coordinate
     def calculateCentroid(self):
-        return [self.wingboxPolygon.centroid.x, self.wingboxPolygon.centroid.y]
+        centroid = []
+        return centroid
+
+    # calculate the centroid and returns it ass coordinate
+    def calculateinertia(self):
+        inertia = 0
+        return inertia
+
+    # calculate the centroid and returns it ass coordinate
+    def calculateStringerLocations(self):
+        coordinateList = []
+        return coordinateList
 
     # calculate the area enclosed by wingbox in terms of chord
     def calculateEnclArea(self):
