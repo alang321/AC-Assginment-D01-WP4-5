@@ -33,70 +33,108 @@ Cm10 = sp.interpolate.interp1d(Ylst, Cm10lst, kind='cubic', fill_value="extrapol
 
 rho = 1.225
 V = 10
-q = 1/2 * rho * (V**2)
+q = 1 / 2 * rho * (V ** 2)
 Liftacclst = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
     Liftacclst.append(Cl0(i) * Chord(i) * q)
-Liftacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Liftacclst, kind='cubic', fill_value="extrapolate")
+Liftacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Liftacclst, kind='cubic', fill_value="extrapolate")
 Dragacclst = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
     Dragacclst.append(ICd0(i) * Chord(i) * q)
-Dragacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Dragacclst, kind='cubic', fill_value="extrapolate")
+Dragacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Dragacclst, kind='cubic', fill_value="extrapolate")
 Momentacclst = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
     Momentacclst.append(Cm0(i) * Chord(i) * q)
-Momentacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Momentacclst, kind='cubic', fill_value="extrapolate")
+Momentacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Momentacclst, kind='cubic', fill_value="extrapolate")
 
 # 10 degrees AoA
 Liftacc10lst = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
     Liftacc10lst.append(Cl10(i) * Chord(i) * q)
-Liftacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Liftacc10lst, kind='cubic', fill_value="extrapolate")
+Liftacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Liftacc10lst, kind='cubic', fill_value="extrapolate")
 Dragacc10lst = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
     Dragacc10lst.append(ICd10(i) * Chord(i) * q)
-Dragacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Dragacc10lst, kind='cubic', fill_value="extrapolate")
+Dragacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Dragacc10lst, kind='cubic', fill_value="extrapolate")
 Momentacc10lst = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
     Momentacc10lst.append(Cm10(i) * Chord(i) * q)
-Momentacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Momentacc10lst, kind='cubic', fill_value="extrapolate")
+Momentacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Momentacc10lst, kind='cubic',
+                                      fill_value="extrapolate")
 
 # Distribution at random AoA / Coeff
 CL_0 = 0.430299
 CL_10 = 1.252323
-CL_d = 2.0  # Desired distribution for this coefficcient
+CL_d = 2  # Desired distribution for this coefficcient
 CL_dList = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
-    CL_dList.append(Liftacc(i) + ((CL_d-CL_0)/(CL_10-CL_0))*(Liftacc10(i)-Liftacc(i)))
-CL_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), CL_dList, kind='cubic', fill_value="extrapolate")
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+    CL_dList.append(Liftacc(i) + ((CL_d - CL_0) / (CL_10 - CL_0)) * (Liftacc10(i) - Liftacc(i)))
+CL_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), CL_dList, kind='cubic', fill_value="extrapolate")
 
 Cd_0 = 0.006490
 Cd_10 = 0.054091
-Cd_d = 0.04  # Desired distribution for this coefficcient
+Cd_d = 0.02  # Desired distribution for this coefficcient
 Cd_dList = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
-    Cd_dList.append(Dragacc(i) + ((Cd_d-Cd_0)/(Cd_10-Cd_0))*(Dragacc10(i)-Dragacc(i)))
-Cd_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Cd_dList, kind='cubic', fill_value="extrapolate")
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+    Cd_dList.append(Dragacc(i) + ((Cd_d - Cd_0) / (Cd_10 - Cd_0)) * (Dragacc10(i) - Dragacc(i)))
+Cd_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Cd_dList, kind='cubic', fill_value="extrapolate")
 
 Cm_0 = -0.621253
 Cm_10 = -1.60557
 Cm_d = -1  # Desired distribution for this coefficcient
 Cm_dList = []
-for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
-    Cm_dList.append(Momentacc(i) + ((Cm_d-Cm_0)/(Cm_10-Cm_0))*(Momentacc10(i)-Momentacc(i)))
-Cm_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"]/2, 0.1), Cm_dList, kind='cubic', fill_value="extrapolate")
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+    Cm_dList.append(Momentacc(i) + ((Cm_d - Cm_0) / (Cm_10 - Cm_0)) * (Momentacc10(i) - Momentacc(i)))
+Cm_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Cm_dList, kind='cubic', fill_value="extrapolate")
 
-#calculation AoA
-AoA=math.degrees(math.asin(((CL_d-CL_0)/(CL_10-CL_0)) * math.sin(math.radians(10))))
+# calculation AoA
+AoAL = math.degrees(math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.radians(10))))
+AoAD = math.degrees(math.asin(((Cd_d - Cd_0) / (Cd_10 - Cd_0)) * math.sin(math.radians(10))))
+AoAM = math.degrees(math.asin(((Cm_d - Cm_0) / (Cm_10 - Cm_0)) * math.sin(math.radians(10))))
 
-print(AoA)
+print(AoAL)
+print(AoAD)
+print(AoAM)
 
+plt.subplot(223)
+X = []
+Y0 = []
+Y10 = []
+Yd = []
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+    X.append(i)
+    Y0.append(Momentacc(i))
+    Y10.append(Momentacc10(i))
+    Yd.append(Cm_dacc(i))
+plt.plot(X, Y0, color="red")
+plt.plot(X, Y10, color="blue")
+plt.plot(X, Yd, color="green")
 
-# X = []
-# Y = []
-# for i in np.arange(0, AircraftProperties.Planform["span"]/2, 0.1):
-#    X.append(i)
-#    Y.append(Cm_dacc(i))
+plt.subplot(221)
+X = []
+Y0 = []
+Y10 = []
+Yd = []
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+    X.append(i)
+    Y0.append(Liftacc(i))
+    Y10.append(Liftacc10(i))
+    Yd.append(CL_dacc(i))
+plt.plot(X, Y0, color="red")
+plt.plot(X, Y10, color="blue")
+plt.plot(X, Yd, color="green")
 
-# plt.plot(X, Y, color="red")
-# plt.show()
+plt.subplot(222)
+X = []
+Y0 = []
+Y10 = []
+Yd = []
+for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+    X.append(i)
+    Y0.append(Dragacc(i))
+    Y10.append(Dragacc10(i))
+    Yd.append(Cd_dacc(i))
+plt.plot(X, Y0, color="red")
+plt.plot(X, Y10, color="blue")
+plt.plot(X, Yd, color="green")
+plt.show()
