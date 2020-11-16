@@ -46,6 +46,13 @@ class WingboxCrossection:
     # calculate the centroid and returns it ass coordinate
     def calculateCentroid(self):
         centroid = []
+        # centroid of i stringers (area times distance)
+        # centroid of trapezoid wingbox
+        coords = self.edgeCoordinates()
+        # centroidx = coords[][] - coords[][]
+        # centroidy = coords[][] - coords[][]
+
+        # average of all centroids = final centroid
         return centroid
 
     # calculate the centroid and returns it ass coordinate
