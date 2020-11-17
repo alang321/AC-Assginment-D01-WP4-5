@@ -92,55 +92,57 @@ AoAL = math.degrees(math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.r
 AoAD = math.degrees(math.asin(((Cd_d - Cd_0) / (Cd_10 - Cd_0)) * math.sin(math.radians(10))))
 AoAM = math.degrees(math.asin(((Cm_d - Cm_0) / (Cm_10 - Cm_0)) * math.sin(math.radians(10))))
 
-print(AoAL)
-print(AoAD)
-print(AoAM)
+# print(AoAL)
+# print(AoAD)
+# print(AoAM)
 
-plt.subplot(223)
-X = []
-Y0 = []
-Y10 = []
-Yd = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    X.append(i)
-    Y0.append(Momentacc(i))
-    Y10.append(Momentacc10(i))
-    Yd.append(Cm_dacc(i))
-plt.plot(X, Y0, color="red")
-plt.plot(X, Y10, color="blue")
-plt.plot(X, Yd, color="green")
-plt.xlabel("Span Position")
-plt.ylabel("Moment")
 
-plt.subplot(221)
-X = []
-Y0 = []
-Y10 = []
-Yd = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    X.append(i)
-    Y0.append(Liftacc(i))
-    Y10.append(Liftacc10(i))
-    Yd.append(CL_dacc(i))
-plt.plot(X, Y0, color="red")
-plt.plot(X, Y10, color="blue")
-plt.plot(X, Yd, color="green")
-plt.ylabel("Lift")
+def drawgraphs():
+    plt.subplot(221)
+    X = []
+    Y0 = []
+    Y10 = []
+    Yd = []
+    for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+        X.append(i)
+        Y0.append(Liftacc(i))
+        Y10.append(Liftacc10(i))
+        Yd.append(CL_dacc(i))
+    plt.plot(X, Y0, color="red")
+    plt.plot(X, Y10, color="blue")
+    plt.plot(X, Yd, color="green")
+    plt.ylabel("Lift")
 
-plt.subplot(222)
-X = []
-Y0 = []
-Y10 = []
-Yd = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    X.append(i)
-    Y0.append(Dragacc(i))
-    Y10.append(Dragacc10(i))
-    Yd.append(Cd_dacc(i))
-plt.plot(X, Y0, color="red")
-plt.plot(X, Y10, color="blue")
-plt.plot(X, Yd, color="green")
-plt.xlabel("Span Position")
-plt.ylabel("Drag")
+    plt.subplot(222)
+    X = []
+    Y0 = []
+    Y10 = []
+    Yd = []
+    for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+        X.append(i)
+        Y0.append(Dragacc(i))
+        Y10.append(Dragacc10(i))
+        Yd.append(Cd_dacc(i))
+    plt.plot(X, Y0, color="red")
+    plt.plot(X, Y10, color="blue")
+    plt.plot(X, Yd, color="green")
+    plt.xlabel("Span Position")
+    plt.ylabel("Drag")
 
-plt.show()
+    plt.subplot(223)
+    X = []
+    Y0 = []
+    Y10 = []
+    Yd = []
+    for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
+        X.append(i)
+        Y0.append(Momentacc(i))
+        Y10.append(Momentacc10(i))
+        Yd.append(Cm_dacc(i))
+    plt.plot(X, Y0, color="red")
+    plt.plot(X, Y10, color="blue")
+    plt.plot(X, Yd, color="green")
+    plt.xlabel("Span Position")
+    plt.ylabel("Moment")
+
+    plt.show()
