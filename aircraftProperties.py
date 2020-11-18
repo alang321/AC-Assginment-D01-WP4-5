@@ -113,7 +113,8 @@ class AircraftProperties:
         "CL max with flaps": 2.62,
         "CL max without flaps": 1.631
     }
-    Material = {
-        "Aluminum Name": "AL6061-T"
+    WingboxMaterial = {
+        "Aluminum Name": "AL6061-T",
+        "shear modulus": 26 * 10**9,
     }
 
