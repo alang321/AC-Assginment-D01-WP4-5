@@ -1,8 +1,8 @@
 from aircraftProperties import AircraftProperties
 from wingboxCrosssection import WingboxCrossection
 import AerodynamicDataThingy
-from Polygon import Polygon
 from Polygon import StringerType
+from wingbox import Wingbox
 
 print(AircraftProperties.Fuselage["Fuselage length"])
 
@@ -10,24 +10,14 @@ print(AircraftProperties.Fuselage["Fuselage length"])
 stringer = StringerType([[0, 0], [0, -3/200], [17/200, -3/200], [17/200, -20/200], [20/200, -20/200], [20/200, 0]], [[0, 0], [20/200, 0]])
 stringer.drawUnplacedStringer()
 
-#2 section
-#wingbox = WingboxCrossection(chordLength=10, sparLocations=[0.15, 0.3, 0.6], sparThicknesses=[0.1, 0.2, 0.1], flangeThicknesses=[0.05, 0.25], amountStringerTop=[9, 10], amountStringerBottom=[2, 3], stringerType=stringer)
-#3 section
-#wingbox = WingboxCrossection(chordLength=10, sparLocations=[0.15, 0.3, 0.5, 0.7], sparThicknesses=[0.1, 0.2, 0.15, 0.1], flangeThicknesses=[0.05, 0.25], amountStringerTop=[5, 5, 6], amountStringerBottom=[2, 3, 2], stringerType=stringer)
-#single cell
-wingbox = WingboxCrossection(chordLength=10, sparLocations=[0.15, 0.6], sparThicknesses=[0.01, 0.01], flangeThicknesses=[0.01, 0.01], amountStringerTop=[9], amountStringerBottom=[3], stringerType=stringer)
+stringerTop = stringer
+stringerBottom = stringer.getMirrorStringerX()
 
 
-print("Enclosed Area:", wingbox.enclosedArea)
-print("Crosssectional Area:", wingbox.totalCrossectionalArea)
-print("Ixx:", wingbox.ixx)
-print("Izz:", wingbox.izz)
-print("Iyy:", wingbox.iyy)
-print("Ixz:", wingbox.izx)
-wingbox.drawWingbox(drawSidewallCenterlines=True, drawCentroid=True)
+wingbox = Wingbox(ribLocations=[0, 0.1, 0.2, 0.3, 0.4, 0.5], sparLocations=[0.15, 0.6], sparThicknesses=[[[0.01, 0.01], 30]], stringersTop=[[0, 20, 0.3, stringer]], stringersBottom=[[0, 10, 0.4, stringerBottom]], sparFlangeConnectionStringerShape=stringer, flangeThicknesses=[[[0.01, 0.01], 30]], crosssectionAmount=400)
+wingbox.drawTopView()
 
-
-
-
-#print(AerodynamicDataThingy.Dragacc(10))
-#AerodynamicDataThingy.drawgraphs()
+while True:
+    pos = int(input("Crossection at location in m:"))
+    print(wingbox.getGeneratedCrosssectionAtY(pos).yLocation)
+    wingbox.getGeneratedCrosssectionAtY(pos).drawWingbox()

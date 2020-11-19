@@ -59,9 +59,9 @@ class Polygon:
                 plt.plot(point[0], point[1], marker='o', color=color)
 
         coord = self.coords.copy()
-        coord.append(coord[0])  # repeat the first point to create a 'closed loop'
-        xs, ys = zip(*coord)  # create lists of x and y values
-        plt.plot(xs, ys, color=color, linestyle=linestyle, linewidth=linewidth)
+        coord.append(coord[0])  # close polygon
+        xlist, yList = zip(*coord)  # lists of x and y values
+        plt.plot(xlist, yList, color=color, linestyle=linestyle, linewidth=linewidth)
 
     def draw(self, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False):
 
@@ -178,19 +178,23 @@ class Polygon:
 
 # a stringer class with some extra properties to the polygon class, this class is created with a stringer shape and an attachment point, this is then sort of a blue print for further stringers called with the function
 class StringerType:
-    def __init__(self, coordinateList, baseAlignmentPoints, attachmentPoint=None): #attachmentLineIndices are the indices of the coordinates that form the "base line", so the line in contact with the sheet its attached to
-        if len(baseAlignmentPoints) != 2 or baseAlignmentPoints[0] == baseAlignmentPoints[1]:
-            raise Exception("Invalid Alignment Points")
+    def __init__(self, coordinateList=None, baseAlignmentPoints=None, attachmentPoint=None, polygon=None): #attachmentLineIndices are the indices of the coordinates that form the "base line", so the line in contact with the sheet its attached to
+        if polygon is not None:
+            self.baseLength = self.__getDistanceBetweenPoints(polygon.referencePoints[0], polygon.referencePoints[1])
+            self.stringerShape = polygon
+        else:
+            if len(baseAlignmentPoints) != 2 or baseAlignmentPoints[0] == baseAlignmentPoints[1]:
+                raise Exception("Invalid Alignment Points")
 
-        self.baseLength = self.__getDistanceBetweenPoints(baseAlignmentPoints[0], baseAlignmentPoints[1])
+            self.baseLength = self.__getDistanceBetweenPoints(baseAlignmentPoints[0], baseAlignmentPoints[1])
 
-        if attachmentPoint is None: # if no attachment point is set, set the attachment point between the two alignment points
-            attachmentPoint = [0, 0]
-            for i in range(2):
-                attachmentPoint[i] = (baseAlignmentPoints[0][i] + baseAlignmentPoints[1][i]) / 2
+            if attachmentPoint is None: # if no attachment point is set, set the attachment point between the two alignment points
+                attachmentPoint = [0, 0]
+                for i in range(2):
+                    attachmentPoint[i] = (baseAlignmentPoints[0][i] + baseAlignmentPoints[1][i]) / 2
 
-        baseAlignmentPoints.append(attachmentPoint)
-        self.stringerShape = Polygon(coordinateList, baseAlignmentPoints)
+            baseAlignmentPoints.append(attachmentPoint)
+            self.stringerShape = Polygon(coordinateList, baseAlignmentPoints)
 
     #returns a polygon of the stringer with the attachemnt point at point and the alignemntpoints aligned rotationally with the line, lin eis supposed to be a list of 2 long lists (2 points)
     def getStringerPolygonAtPointAndLine(self, point, line, mirrorHorizontal=False, mirrorVertical=False):
@@ -212,6 +216,12 @@ class StringerType:
 
     def drawUnplacedStringer(self, color="red"):
         self.stringerShape.draw(drawRefPoints=True, color=color)
+
+    def getMirrorStringerX(self):
+        return StringerType(polygon=self.stringerShape.getMirroredPolygonX())
+
+    def getMirrorStringerZ(self):
+        return StringerType(polygon=self.stringerShape.getMirroredPolygonZ())
 
     def __getDistanceBetweenPoints(self, coord1, coord2):
         return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5

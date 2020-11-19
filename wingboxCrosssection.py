@@ -8,12 +8,12 @@ from aircraftProperties import AircraftProperties
 
 class WingboxCrossection:
 
-    # sparLocation: left to right, flange thickness: top, bottom, numStringers: lists per section (for example: 3 spars leads to 2 sections, stringershpae: stringerType object, from this the other stringers can be created)
-    def __init__(self, chordLength, sparLocations, sparThicknesses, flangeThicknesses, amountStringerTop, amountStringerBottom, stringerType):
+    def __init__(self, chordLength, sparLocations, sparThicknesses, flangeThicknesses, stringersTop, stringersBottom, yLocation=0):
         #spar locations
         self.chordLength = chordLength
 
-        self.stringerType = stringerType
+        #y location of crossection, not used in calculation, just for reference if needed
+        self.yLocation = yLocation
 
         #spars
         self.sparLocations = sparLocations
@@ -40,9 +40,9 @@ class WingboxCrossection:
             self.perSectionThicknesses.append(sectionThicknesses)
 
         #number of stringers lists
-        self.amountStringersTop = amountStringerTop
-        self.amountStringersBottom = amountStringerBottom
-        self.amountStringer = [self.amountStringersTop, self.amountStringersBottom]
+        self.stringersTop = stringersTop
+        self.stringersBottom = stringersBottom
+        self.stringers = [self.stringersTop, stringersBottom]
 
         #outside corner Coordinates of the entire wingbox
         outerCornerCoordinates = self.__getOuterCornerCoordinates()
@@ -264,31 +264,17 @@ class WingboxCrossection:
     def __placeStringers(self):
         stringers = []
 
-        for sectionId, innerPolygon in enumerate(self.insidePolygons):
-            flangeInnerEdge = [[innerPolygon.coords[0], innerPolygon.coords[3]], [innerPolygon.coords[1], innerPolygon.coords[2]]]
+        attachmentLine = [[self.insidePolygons[0].coords[0], self.insidePolygons[0].coords[3]], [self.insidePolygons[0].coords[1], self.insidePolygons[0].coords[2]]]
 
-            for sideId, flange in enumerate(flangeInnerEdge):
-                sectionWidth = flange[1][0] - flange[0][0] - self.stringerType.baseLength
-                distance = sectionWidth / (self.amountStringer[sideId][sectionId] - 1)
+        for side in range(2):
+            xList = []
+            for stringer in self.stringers[side]:
+                xList.append(stringer[0])
 
-                xList = []
-                for i in range(self.amountStringer[sideId][sectionId]):
-                    xList.append(flange[0][0] + self.stringerType.baseLength/2 + distance * i)
+            zList = WingboxCrossection.getZfromXLine(attachmentLine[side][0], attachmentLine[side][1], xList)
 
-                zList = WingboxCrossection.getZfromXLine(flange[0], flange[1], xList)
-
-                if sideId == 1:
-                    mirrorHorizontal = True
-                else:
-                    mirrorHorizontal = False
-
-                for index in range(self.amountStringer[sideId][sectionId]):
-                    if index == 0:
-                        mirrorVertical = True
-                    else:
-                        mirrorVertical = False
-
-                    stringers.append(self.stringerType.getStringerPolygonAtPointAndLine([xList[index], zList[index]], [flange[0], flange[1]], mirrorHorizontal=mirrorHorizontal, mirrorVertical=mirrorVertical))
+            for index, stringer in enumerate(self.stringers[side]):
+                stringers.append(stringer[1].getStringerPolygonAtPointAndLine([xList[index], zList[index]], [attachmentLine[side][0], attachmentLine[side][1]]))
 
         return stringers
 
