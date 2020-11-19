@@ -108,10 +108,14 @@ class AircraftProperties:
         "speed of sound at cruise": 301.833, # $ms^{-1}$
         "cruise velocity": 232.412, # $ms^{-1}$
         "density at cruise": 0.4436323254,
-        "cruise velocity": 232.412 # $ms^{-1}$
     }
     Lift = {
         "CL max with flaps": 2.62,
         "CL max without flaps": 1.631
-        }
+    }
+    WingboxMaterial = {
+        "Aluminum Name": "AL6061-T",
+        "shear modulus": 26 * 10**9,
+        "e modulus": 68.9 * 10**9,
+    }
 

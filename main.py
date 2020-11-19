@@ -1,16 +1,30 @@
 from aircraftProperties import AircraftProperties
-from wingboxGeometry import WingboxGeometry
-import AerodynamicLoading
+from wingboxCrosssection import WingboxCrossection
+import AerodynamicDataThingy
+from Polygon import StringerType
+from wingbox import Wingbox
 
 print(AircraftProperties.Fuselage["Fuselage length"])
 
-wingbox = WingboxGeometry(forwardSpar=0.15, aftSpar=0.6)
-print(wingbox.edgeCoordinates())
-print(wingbox.calculateEnclArea())
-wingbox.drawWingbox()
+#stringer = StringerType([[0, 0], [0, -1/1000], [19/1000, -1/1000], [19/1000, -20/1000], [20/1000, -20/1000], [20/1000, 0]], [[0, 0], [20/1000, 0]])
+stringer = StringerType([[0, 0], [0, -3/200], [17/200, -3/200], [17/200, -20/200], [20/200, -20/200], [20/200, 0]], [[0, 0], [20/200, 0]])
+stringer.drawUnplacedStringer()
 
-test = WingboxGeometry(forwardSpar=0.087654, aftSpar=0.87)
-test.drawWingbox()
+stringerTop = stringer
+stringerBottom = stringer.getMirrorStringerX()
 
-print(AerodynamicLoading.Dragacc(10))
-AerodynamicLoading.drawgraphs()
+
+wingbox = Wingbox(ribLocations=[0, 0.1, 0.2, 0.3, 0.4, 0.5], sparLocations=[0.15, 0.6], sparThicknesses=[[[0.01, 0.01], 30]], stringersTop=[[0, 20, 0.3, stringer]], stringersBottom=[[0, 10, 0.4, stringerBottom]], sparFlangeConnectionStringerShape=stringer, flangeThicknesses=[[[0.01, 0.01], 30]], crosssectionAmount=400)
+wingbox.drawTopView()
+
+wingbox.drawInertia(wingbox.ixx)
+wingbox.drawInertia(wingbox.izz)
+wingbox.drawInertia(wingbox.ixz)
+wingbox.drawInertia(wingbox.iyy)
+
+
+
+while True:
+    pos = int(input("Crossection at location in m:"))
+    print(wingbox.getGeneratedCrosssectionAtY(pos).yLocation)
+    wingbox.getGeneratedCrosssectionAtY(pos).drawWingbox(drawCentroid=True, drawSidewallCenterlines=True)
