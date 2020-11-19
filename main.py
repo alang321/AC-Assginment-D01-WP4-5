@@ -17,7 +17,14 @@ stringerBottom = stringer.getMirrorStringerX()
 wingbox = Wingbox(ribLocations=[0, 0.1, 0.2, 0.3, 0.4, 0.5], sparLocations=[0.15, 0.6], sparThicknesses=[[[0.01, 0.01], 30]], stringersTop=[[0, 20, 0.3, stringer]], stringersBottom=[[0, 10, 0.4, stringerBottom]], sparFlangeConnectionStringerShape=stringer, flangeThicknesses=[[[0.01, 0.01], 30]], crosssectionAmount=400)
 wingbox.drawTopView()
 
+wingbox.drawInertia(wingbox.ixx)
+wingbox.drawInertia(wingbox.izz)
+wingbox.drawInertia(wingbox.ixz)
+wingbox.drawInertia(wingbox.iyy)
+
+
+
 while True:
     pos = int(input("Crossection at location in m:"))
     print(wingbox.getGeneratedCrosssectionAtY(pos).yLocation)
-    wingbox.getGeneratedCrosssectionAtY(pos).drawWingbox()
+    wingbox.getGeneratedCrosssectionAtY(pos).drawWingbox(drawCentroid=True, drawSidewallCenterlines=True)

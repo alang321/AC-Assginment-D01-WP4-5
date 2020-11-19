@@ -302,6 +302,7 @@ class WingboxCrossection:
         #plot top and bottom line
         plt.plot([i*self.chordLength for i in self.airfoilData[0][0]], [i*self.chordLength for i in self.airfoilData[0][1]], color="blue")
         plt.plot([i*self.chordLength for i in self.airfoilData[1][0]], [i*self.chordLength for i in self.airfoilData[1][1]], color="blue")
+        plt.plot([self.airfoilData[0][0][-1]*self.chordLength, self.airfoilData[1][0][-1]*self.chordLength], [self.airfoilData[0][1][-1]*self.chordLength, self.airfoilData[1][1][-1]*self.chordLength], color="blue")
 
         #draw centroid
         if drawCentroid:

@@ -116,5 +116,6 @@ class AircraftProperties:
     WingboxMaterial = {
         "Aluminum Name": "AL6061-T",
         "shear modulus": 26 * 10**9,
+        "e modulus": 68.9 * 10**9,
     }
 

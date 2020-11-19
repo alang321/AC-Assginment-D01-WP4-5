@@ -63,6 +63,26 @@ class Wingbox:
 
         self.crosssecctions = self.generateCrossection(self.crosssectionAmount)
 
+        #list = [yLocations, Inertia]
+        self.ixx, self.izz, self.ixz, self.iyy = self.__generateInertialists()
+
+    def __generateInertialists(self):
+        yLocation = []
+        ixx = []
+        izz = []
+        ixz = []
+        iyy = []
+
+        for crosssection in self.crosssecctions:
+            yLocation.append(crosssection.yLocation)
+
+            ixx.append(crosssection.ixx)
+            izz.append(crosssection.izz)
+            ixz.append(crosssection.izx)
+            iyy.append(crosssection.iyy)
+
+        return [yLocation, ixx], [yLocation, izz], [yLocation, ixz], [yLocation, izz]
+
     def __generateSparFlangeConnectionStringers(self, stringerType):
         stringersTop = []
         stringersBottom = []
@@ -174,11 +194,22 @@ class Wingbox:
 
         plt.show()
 
+    def drawInertia(self, inertia, scatterPlot=False):
+        plt.clf()
+
+        if scatterPlot:
+            plt.scatter(inertia[0], inertia[1], color="red")
+        else:
+            plt.plot(inertia[0], inertia[1], color="red")
+
+        plt.show()
+
     def chordAtY(self, y):
         return self.rootchord * (1 + ((2 * (self.taperratio - 1)) / self.span) * y)
 
     def leadingEdgeXPos(self, posY):
         return self.rootchord/2 - self.chordAtY(posY)/2
+
 
 
 
