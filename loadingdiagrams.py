@@ -14,7 +14,7 @@ h_c = AircraftProperties.Cruise_constants["cruise altitude"]         #altitude a
 rho_c = AircraftProperties.Cruise_constants["density at cruise"]
 T_c = 226.733
 g = 9.81
-
+pi = 3.14159
 
 #weights [N]
 MTOW = AircraftProperties.Weight["MTOW"]                             #maximum takeoff weight
@@ -43,6 +43,8 @@ rho_h_dic = {'SL': rho_0, 'FL150': rho_1, 'FL310': rho_c}
 T_dic = {'SL': T_0, 'FL150': T_1, 'FL310': T_c}
 h_dic = {'SL': 0, 'FL150': 4572, 'FL310': 9449}
 weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
+
+
 
 
 ###---velocity calculations---###
@@ -83,6 +85,13 @@ C_L_alpha = 4.62
 
 
 ###---gust calculations---###
+Z_mo = h_c
+R_1 = 1
+R_2 = ZFW / MTOW
+F_gz = 1 - (Z_mo/76200)
+F_gm = math.sqrt(R_2 * math.tan(pi*R_1/4))
+F_g = 0.5*(F_gz+F_gm)
+
 
 def get_weight_factor(W, rho_h):
 
@@ -108,6 +117,39 @@ def get_V_B(W, K_g, V_S1):
     V_B = V_S1 * math.sqrt(1+ (K_g * rho_0 * U_ref * V_C * C_L_alpha)/(2*W))
 
     return V_B
+
+def get_U_ds(U_ref, H):
+
+    U_ds = Uref * Fg * ((H/107)**(1/6))
+
+    return U_ds
+
+def get_U(U_ds, H, s):
+
+    U = (U_ds/2)*(1-math.cos(pi*s/H))
+
+    return U
+
+def get_omega(V, H):
+
+    omega = pi * V / H
+
+    return omega
+
+def time_constant(W, C_L_alpha, V, rho_h):
+
+    time_constant = (W*2)/(S * C_L_alpha * V * rho_h * g)
+
+    return time_constant
+
+def gust_load_factor(t, U_ds, omega, time_constant):
+
+    gust_load_factor = (U_ds/(2*g))*((omega*math.sin(omega*t))+((1/(1+(omega*time_constant**(-2))))*((e**(-t/time_constant))/time_constant)-(math.cos(omega*t)/time_constant)-(omega*math.sin(omega*t))))
+
+    return gust_load_factor
+
+
+
 
 ###---speeds results---###
 
@@ -197,6 +239,8 @@ for i in range(len(V_all_list)):
         MTOW_FL310.append(V_all_list[i])
 
 print(OEW_SL)
+
+
     
                
                
