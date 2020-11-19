@@ -12,13 +12,10 @@ import matplotlib.pyplot as plt
 from scipy import interpolate
 
 
-
 speeds = [150, 230, 300, 300, 270, 210, 150]   # origin, V_A, V_D, V_D, V_F, V_S1, 
 n_values = [0, 3, 3, 0, -1.2, -1.2, 0]
 
-
 diagram_values = np.column_stack((speeds, n_values))
-
 
 
 for i in range(1, len(speeds)):
