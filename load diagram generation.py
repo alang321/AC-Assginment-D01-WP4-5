@@ -15,11 +15,11 @@ import math
 
 #test speeds (inputs)
 
-V_A = 78.4
-V_D = 327.6
-V_F = 89.2
-V_S1 = 49.6
-V_S0 = 39.1
+V_A = 195.9
+V_D = 290.6
+V_F = 198.2
+V_S1 = 123.9
+V_S0 = 97.8
 
 #test loads (inputs)
 n_max = 2.5
@@ -55,6 +55,10 @@ plt.plot(x2, y2, 'black')  #flaps down curve
 plt.plot(x3, -(x3 / V_S1)**2, 'black')
  
 plt.show()
+
+
+###---MANEUVRE LOAD DIAGRAM---###
+
 
 
 
