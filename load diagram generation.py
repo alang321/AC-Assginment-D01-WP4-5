@@ -9,6 +9,7 @@ Created on Mon Nov 16 15:51:54 2020
 
 import numpy as np 
 import matplotlib.pyplot as plt
+import math
 
 ###---MANEUVRE LOAD DIAGRAM---###
 
@@ -23,6 +24,12 @@ V_S0 = 150
 #test loads (inputs)
 n_max = 3
 n_min = -1.2
+
+def get_V_n_2(Vs1):
+
+    V_n_2 = Vs1 * (math.sqrt(2))
+
+    return V_n_2
 
 
 speeds = [V_A, V_D, V_D, V_F, V_S1]  
