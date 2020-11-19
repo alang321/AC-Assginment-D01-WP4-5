@@ -196,17 +196,22 @@ for weights, values in weights_dic.items():
         V_S1_values[nametagS1] = V_S1
         V_A_values[nametagA] = V_A
         V_B_values[nametagB] = V_B
+
+print(V_S0_values)
+print(V_S1_values)
+print(V_D_values)
+print(V_A_values)
         
         
 V_all_dict = {}             
 V_all_dict.update(V_A_values)
-V_all_dict.update(V_S0_values)
-V_all_dict.update(V_S1_values)
-V_all_dict.update(V_C_values)
 V_all_dict.update(V_D_values)
+V_all_dict.update(V_D_values)
+#V_all_dict.update(V_F_values)
+V_all_dict.update(V_S1_values)
 V_all_list = list(V_all_dict.values())
 
-print(V_all_dict)
+#print(V_all_dict)
 
 OEW_SL = []
 OEW_FL150 = []
