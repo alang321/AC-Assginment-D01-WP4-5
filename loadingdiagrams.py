@@ -156,27 +156,48 @@ for weights, values in weights_dic.items():
         V_B_values[nametagB] = V_B
         
         
-        
-     
-print(V_C_values)
-print(V_D_values)
-print(V_S0_values)
-print(V_S1_values)
-print(V_A_values)
-print(V_B_values)
-        
-            
+V_all_dict = {}             
+V_all_dict.update(V_A_values)
+V_all_dict.update(V_S0_values)
+V_all_dict.update(V_S1_values)
+V_all_dict.update(V_C_values)
+V_all_dict.update(V_D_values)
+V_all_list = list(V_all_dict.values())
 
+print(V_all_dict)
 
+OEW_SL = []
+OEW_FL150 = []
+OEW_FL310 = []
+ZFW_SL = []
+ZFW_FL150 = []
+ZFW_FL310 = []
+MTOW_SL = []
+MTOW_FL150 = []
+MTOW_FL310 = []
 
+for i in range(len(V_all_list)): 
+    if i % 9 == 0:
+        OEW_SL.append(V_all_list[i])
+    elif i % 9 == 1:
+        OEW_FL150.append(V_all_list[i])
+    elif i % 9 == 2:
+        OEW_FL310.append(V_all_list[i])
+    elif i % 9 == 3:
+        ZFW_SL.append(V_all_list[i])
+    elif i % 9 == 4:
+        ZFW_FL150.append(V_all_list[i])
+    elif i % 9 == 5:
+        ZFW_FL310.append(V_all_list[i])
+    elif i % 9 == 6:
+        MTOW_SL.append(V_all_list[i])
+    elif i % 9 == 7:
+        MTOW_FL150.append(V_all_list[i])
+    elif i % 9 == 8:
+        MTOW_FL310.append(V_all_list[i])
 
-
-
-
-
-
-
-
-
-
+print(OEW_SL)
+    
+               
+               
 
