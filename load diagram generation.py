@@ -41,8 +41,7 @@ def f(x):
 
 x1 = np.linspace(0,V_A, 1000)
 x2 = np.linspace(0, V_S1 * math.sqrt(2), 1000)
-x3 = np.linspace(0, V_S1, 1000
-                 )
+x3 = np.linspace(0, V_S1, 1000)
 y2 = []      #flaps down curve n values
 
 for i in x2:
