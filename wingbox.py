@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 from aircraftProperties import AircraftProperties
 from Polygon import Polygon
 from wingboxCrosssection import WingboxCrossection
+from scipy.interpolate import interp1d
+from scipy.integrate import quad
+import numpy as np
 
 class Wingbox:
     #spar flange connection stringer should be the name basically with the orientation such aconnection stringer would have in the top right
@@ -64,14 +67,29 @@ class Wingbox:
         self.crosssecctions = self.generateCrossection(self.crosssectionAmount)
 
         #list = [yLocations, Inertia]
-        self.ixx, self.izz, self.ixz, self.iyy = self.__generateInertialists()
+        self.ixxList, self.izzList, self.ixzList, self.jList = self.__generateInertialists()
+
+        self.ixxFuncY = interp1d(self.ixxList[0], self.ixxList[1])
+        self.izzFuncY = interp1d(self.izzList[0], self.izzList[1])
+        self.ixzFuncY = interp1d(self.ixzList[0], self.ixzList[1])
+        self.jFuncY = interp1d(self.jList[0], self.jList[1])
+
+        #just for drawing the inertias
+        self.inertiaFunctionsY = [self.ixxFuncY, self.izzFuncY, self.ixzFuncY, self.jFuncY]
+        self.inertiaNames = ["Ixx", "Izz", "Ixz", "J"]
+
+        #mat properties
+        # shear modulus": 26 * 10**9,
+        self.E = AircraftProperties.WingboxMaterial["e modulus"]
+        self.G = AircraftProperties.WingboxMaterial["shear modulus"]
+
 
     def __generateInertialists(self):
         yLocation = []
         ixx = []
         izz = []
         ixz = []
-        iyy = []
+        j = []
 
         for crosssection in self.crosssecctions:
             yLocation.append(crosssection.yLocation)
@@ -79,9 +97,9 @@ class Wingbox:
             ixx.append(crosssection.ixx)
             izz.append(crosssection.izz)
             ixz.append(crosssection.izx)
-            iyy.append(crosssection.iyy)
+            j.append(crosssection.iyy)
 
-        return [yLocation, ixx], [yLocation, izz], [yLocation, ixz], [yLocation, izz]
+        return [yLocation, ixx], [yLocation, izz], [yLocation, ixz], [yLocation, j]
 
     def __generateSparFlangeConnectionStringers(self, stringerType):
         stringersTop = []
@@ -115,7 +133,7 @@ class Wingbox:
     def generateCrossection(self, crosssectionAmount):
         crosssections = []
 
-        for i in range(1, crosssectionAmount+1):
+        for i in range(0, crosssectionAmount+1):
             yPos = self.semispan / crosssectionAmount * i
             crosssections.append(self.getCrosssectionAtY(yPos))
 
@@ -150,8 +168,6 @@ class Wingbox:
         return WingboxCrossection(chordLength=self.chordAtY(posY), sparLocations=self.sparLocations, sparThicknesses=sparThicknesses,
                            flangeThicknesses=flangeThicknesses, stringersTop=stringers[0], stringersBottom=stringers[1], yLocation=posY)
 
-
-
     def __getStringerIntersection(self, stringer, posY):
         xList = stringer[0]
         yList = stringer[1]
@@ -162,7 +178,6 @@ class Wingbox:
             return (posY-d)/k
         else:
             return None
-
 
     def drawTopView(self):
         plt.clf()
@@ -194,13 +209,23 @@ class Wingbox:
 
         plt.show()
 
-    def drawInertia(self, inertia, scatterPlot=False):
-        plt.clf()
+    def drawInertias(self):
+        fig, plots = plt.subplots(2, 2)
+        fig.suptitle('Inertias')
+        for row in range(2):
+            for col in range(2):
+                plots[row, col].plot(self.ixxList[0], [self.inertiaFunctionsY[row * 2 + col](i) for i in self.ixxList[0]])
+                plots[row, col].set_title(self.inertiaNames[row * 2 + col])
+                plots[row, col].set(ylabel=r'Inertia [$m^4$]', xlabel='semi-span [m]')
+        fig.tight_layout(pad=1.5)
 
-        if scatterPlot:
-            plt.scatter(inertia[0], inertia[1], color="red")
-        else:
-            plt.plot(inertia[0], inertia[1], color="red")
+        plt.show()
+
+    def drawDeflection(self, verticalDeflectionFunction):
+        plt.plot(self.ixxList[0], [verticalDeflectionFunction(i) for i in self.ixxList[0]])
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'deflection [m]')
+        plt.gca().set_aspect('equal', adjustable='box')
 
         plt.show()
 
@@ -210,6 +235,40 @@ class Wingbox:
     def leadingEdgeXPos(self, posY):
         return self.rootchord/2 - self.chordAtY(posY)/2
 
+    def getVerticalDeflectionFunction(self, MxAtYFunction, integrationFidelity=10):
+        dvoverdy = []
+        v = []
+        yList = np.linspace(0, self.semispan, integrationFidelity)
+
+        for yVal in yList:
+            f = lambda y: MxAtYFunction(y) / (self.E * self.ixxFuncY(y))
+            i = quad(f, 0, yVal)
+            dvoverdy.append(i[0] * -1)
+
+        dvoverdyfunc = interp1d(yList, dvoverdy)
+
+        for yVal in np.linspace(0, self.semispan, integrationFidelity):
+            f = lambda y: dvoverdyfunc(y)
+            i = quad(f, 0, yVal)
+            v.append(i[0])
+
+        return interp1d(yList, dvoverdy)
+
+    def getVerticalDeflectionAtY(self, MxAtYFunction, yPos, integrationFidelity=10):
+        dvoverdy = []
+        yList = np.linspace(0, self.semispan, integrationFidelity)
+
+        for yVal in yList:
+            f = lambda y: MxAtYFunction(y) / (self.E * self.ixxFuncY(y))
+            i = quad(f, 0, yVal)
+            dvoverdy.append(i[0] * -1)
+
+        dvoverdyfunc = interp1d(yList, dvoverdy)
+
+        f = lambda y: dvoverdyfunc(y)
+        i = quad(f, 0, yPos)
+
+        return i[0]
 
 
 
