@@ -79,6 +79,10 @@ def get_V_D(V_C):
 
     return V_D
 
+def get_V_F(W, V_S1, V_S0):
+    V_F1 = 1.6*V_S1
+    
+
 
 ###---aerodynamic calculations---###
 C_L_alpha = 4.62
@@ -197,10 +201,7 @@ for weights, values in weights_dic.items():
         V_A_values[nametagA] = V_A
         V_B_values[nametagB] = V_B
 
-print(V_S0_values)
-print(V_S1_values)
-print(V_D_values)
-print(V_A_values)
+
         
         
 V_all_dict = {}             
@@ -209,6 +210,7 @@ V_all_dict.update(V_D_values)
 V_all_dict.update(V_D_values)
 #V_all_dict.update(V_F_values)
 V_all_dict.update(V_S1_values)
+V_all_dict.update(V_S0_values)
 V_all_list = list(V_all_dict.values())
 
 #print(V_all_dict)
