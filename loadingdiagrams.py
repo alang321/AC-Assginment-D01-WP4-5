@@ -50,7 +50,7 @@ weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
 
 
 
-###---velocity calculations---###
+###---maneuver calculations---###
 
 def get_V_C(T_h):
 
@@ -269,10 +269,10 @@ V_all_list_sorted = [OEW_SL, OEW_FL150, OEW_FL310, ZFW_SL, ZFW_FL150, ZFW_FL310,
 
 ###---MANEUVRE LOAD DIAGRAM---###
 
-def f(x):
-    return (x / V_S1)**2
-
 def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1):
+
+    def f(x):
+        return (x / V_S1)**2
                   
     speeds = [V_A, V_D, V_D, V_F, V_S1]  
     n_values = [n_max, n_max, 0, n_min, n_min]
