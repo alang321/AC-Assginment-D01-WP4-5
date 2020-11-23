@@ -25,6 +25,12 @@ V_S0 = 97.8
 n_max = 2.5
 n_min = -1
 
+def get_V_n_2(Vs1):
+
+    V_n_2 = Vs1 * (math.sqrt(2))
+
+    return V_n_2
+
 
 speeds = [V_A, V_D, V_D, V_F, V_S1]  
 n_values = [n_max, n_max, 0, n_min, n_min]
@@ -41,8 +47,7 @@ def f(x):
 
 x1 = np.linspace(0,V_A, 1000)
 x2 = np.linspace(0, V_S1 * math.sqrt(2), 1000)
-x3 = np.linspace(0, V_S1, 1000
-                 )
+x3 = np.linspace(0, V_S1, 1000)
 y2 = []      #flaps down curve n values
 
 for i in x2:
