@@ -1,5 +1,7 @@
 from aircraftProperties import AircraftProperties
 import math
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 ###---constants---###
@@ -257,8 +259,76 @@ for i in range(len(V_all_list)):
         MTOW_FL310.append(V_all_list[i])
 
 V_all_list_sorted = [OEW_SL, OEW_FL150, OEW_FL310, ZFW_SL, ZFW_FL150, ZFW_FL310, MTOW_SL, MTOW_FL150, MTOW_FL310]
+print(len(V_all_list_sorted))
+
+print(V_all_list_sorted[0])
 
 
+
+
+
+###---MANEUVRE LOAD DIAGRAM---###
+def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
+
+    def f(x):
+        return (x / V_S1)**2
+                  
+    speeds = [V_A, V_D, V_D, V_F, V_S1]  
+    n_values = [n_max, n_max, 0, n_min, n_min]
+
+    plt.plot(speeds, n_values, 'black')
+    plt.title(title)
+    plt.xlabel('Velocity')
+    plt.ylabel('Load')
+    plt.text(V_A, n_max, 'V_A') #add text to diagram
+
+
+    x1 = np.linspace(0,V_A, 1000)
+    x2 = np.linspace(0, V_S1 * math.sqrt(2), 1000)
+    x3 = np.linspace(0, V_S1, 1000)
+    y2 = []      #flaps down curve n values
+
+    for i in x2:
+        a = (i / V_S0)**2
+        a = min(a, 2)
+        y2.append(a)
+
+    plt.plot(x1, f(x1), 'black')  # (0,0) to V_A curve
+    plt.plot(x2, y2, 'black')  #flaps down curve
+    plt.plot(x3, -f(x3), 'black')
+    plt.axvline(x=V_A, color = 'black', linestyle = '--')
+    plt.axvline(x=V_S0, color = 'black', linestyle = '--')
+ 
+    return plt.show()
+
+plt.figure()
+for i in range(len(V_all_list_sorted)):
+
+    V_A = V_all_list_sorted[i][0]
+    V_D = V_all_list_sorted[i][2]
+    V_F = V_all_list_sorted[i][3]
+    V_S0 = V_all_list_sorted[i][4]
+    V_S1 = V_all_list_sorted[i][5]
+        
+    if i  == 0:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and SL')
+    elif i % 9 == 1:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL150')
+    elif i % 9 == 2:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL310')
+    elif i % 9 == 3:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and SL')
+    elif i % 9 == 4:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL150')
+    elif i % 9 == 5:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL310')
+    elif i % 9 == 6:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and SL')
+    elif i % 9 == 7:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL150')
+    elif i % 9 == 8:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL310')
+            
 
 
 
