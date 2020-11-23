@@ -154,10 +154,16 @@ def get_time_constant(W, V, rho_h):
     return time_constant
 
 def get_gust_load_factor(t, U_ds, omega, time_constant):
+    term1 = U_ds/(2*g)
+    term2 = omega * math.sin(omega*t)
+    term3 = 1 / (1+(omega*time_constant)**(-2))
+    term4 = (1/time_constant)* math.exp(-t/time_constant)
+    term5 = math.cos(omega*t)/time_constant
 
-    gust_load_factor = (U_ds/(2*g))*((omega*math.sin(omega*t))+((1/(1+(omega*time_constant**(-2))))*((math.exp(-t/time_constant))/time_constant)-(math.cos(omega*t)/time_constant)-(omega*math.sin(omega*t))))
+    gust_load_factor = term1 * (term2 + term3*(term4-term5-term2))
 
     return gust_load_factor
+
 
 ###---Find Maximum Load Factor Conditions ---###
 max_load_factor = 0
@@ -220,7 +226,7 @@ for weights, values in weights_dic.items():
                     if gust_load_factor > max_load_factor:                      
                         max_load_factor = gust_load_factor
                         V_max_load = V
-                        W_max_load = values
+                        W_max_load = weights
                         H_max_load = H
                         h_max_load = keys
                         t_max_load = t
@@ -231,10 +237,16 @@ for weights, values in weights_dic.items():
                         time_constant_max_load = time_constant
                         
                         
-#print('The maximum gust load factor is {} and occurs at {} and at an altitude of {} while flying at a velocity of {}').format()
+print('Maximum gust load factor: {}'.format(max_load_factor))
+print('Occurst at:')
+print('Weight: {}'.format(W_max_load))
+print('Altitude: {}'.format(h_max_load))
+print('Velocity: {}'.format(V_max_load))
+print('Gust gradient distance: {}'.format(H_max_load))
 
-#print(get_gust_load_factor(t_max_load, U_ds_max_load, omega_max_load, time_constant_max_load))
-
+print(n_max_load)
+###--- Gust Loads Plotters ---###
+                              
 def gust_load_plotter(n, U_ds, omega, time_constant):
     def f(x):
         return get_gust_load_factor(x, U_ds, omega, time_constant)
