@@ -47,6 +47,7 @@ T_dic = {'SL': T_0, 'FL150': T_1, 'FL310': T_c}
 h_dic = {'SL': 0, 'FL150': 4572, 'FL310': 9449}
 weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
 
+#quick calculations
 Z_mo = h_c
 R_1 = 1
 R_2 = ZFW / MTOW
@@ -109,3 +110,4 @@ def gust_load_factor(t, U_ds, omega, time_constant):
     gust_load_factor = (U_ds/(2*g))*((omega*math.sin(omega*t))+((1/(1+(omega*time_constant**(-2))))*((math.exp(-t/time_constant))/time_constant)-(math.cos(omega*t)/time_constant)-(omega*math.sin(omega*t))))
 
     return gust_load_factor
+
