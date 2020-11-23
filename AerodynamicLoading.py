@@ -87,10 +87,11 @@ for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
     Cm_dList.append(Momentacc(i) + ((Cm_d - Cm_0) / (Cm_10 - Cm_0)) * (Momentacc10(i) - Momentacc(i)))
 Cm_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Cm_dList, kind='cubic', fill_value="extrapolate")
 
+
 # calculation AoA
-AoAL = math.degrees(math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.radians(10))))
-AoAD = math.degrees(math.asin(((Cd_d - Cd_0) / (Cd_10 - Cd_0)) * math.sin(math.radians(10))))
-AoAM = math.degrees(math.asin(((Cm_d - Cm_0) / (Cm_10 - Cm_0)) * math.sin(math.radians(10))))
+def getangleofattack():
+    AoAL = math.degrees(math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.radians(10))))
+    return AoAL
 
 # print(AoAL)
 # print(AoAD)
@@ -146,3 +147,6 @@ def drawgraphs():
     plt.ylabel("Moment")
 
     plt.show()
+
+
+drawgraphs()
