@@ -1,30 +1,81 @@
 from aircraftProperties import AircraftProperties
 from wingboxCrosssection import WingboxCrossection
-import AerodynamicDataThingy
 from Polygon import StringerType
 from wingbox import Wingbox
+import test
+import numpy as np
+from distributedLoad import distributedLoad
 
-print(AircraftProperties.Fuselage["Fuselage length"])
 
-#stringer = StringerType([[0, 0], [0, -1/1000], [19/1000, -1/1000], [19/1000, -20/1000], [20/1000, -20/1000], [20/1000, 0]], [[0, 0], [20/1000, 0]])
-stringer = StringerType([[0, 0], [0, -3/200], [17/200, -3/200], [17/200, -20/200], [20/200, -20/200], [20/200, 0]], [[0, 0], [20/200, 0]])
-stringer.drawUnplacedStringer()
 
+#aerodynamicLoadingDistribution.drawAerodynamicCoefficients()
+
+v = 232
+rho = 1.225
+S = 362.73
+cL = 1866756/((1/2) * rho * v**2 * S)
+forces = test.getLiftDragMomentDistribution(cL, 0.375, v, rho)
+
+test.drawAerodynamicCoefficients()
+test.drawAerodynamicForces(forces)
+
+
+#Add normal force
+normalForce = distributedLoad([0, AircraftProperties.Planform["span"] / 2])
+
+normalForce.addDistibutedLoad(forces[0])
+normalForce.addPointLoad(-AircraftProperties.Engine["weight"], 10, "Engine")
+
+normalForce.drawLoads(fidelity=100)
+normalForce.getShearForce(fidelity=20)
+normalForce.getMomentDistribution(fidelity=20)
+normalForce.drawShear()
+
+#tangentialForce = distributedLoad([0, AircraftProperties.Planform["span"] / 2])
+#tangentialForce.addDistibutedLoad(forces[1])
+#tangentialForce.getShearForce(fidelity=20)
+#tangentialForce.getMomentDistribution(fidelity=20)
+
+twistMoment = distributedLoad([0, AircraftProperties.Planform["span"] / 2])
+twistMoment.addMomentDistribution(forces[2])
+twistMoment.drawMoment()
+
+
+
+
+stringer = StringerType([[0, 0], [0, -3/500], [17/500, -3/200], [17/500, -20/500], [20/500, -20/500], [20/500, 0]], [[0, 0], [20/500, 0]])
 stringerTop = stringer
 stringerBottom = stringer.getMirrorStringerX()
 
 
-wingbox = Wingbox(ribLocations=[0, 0.1, 0.2, 0.3, 0.4, 0.5], sparLocations=[0.15, 0.6], sparThicknesses=[[[0.01, 0.01], 30]], stringersTop=[[0, 20, 0.3, stringer]], stringersBottom=[[0, 10, 0.4, stringerBottom]], sparFlangeConnectionStringerShape=stringer, flangeThicknesses=[[[0.01, 0.01], 30]], crosssectionAmount=400)
-wingbox.drawTopView()
+# rib location : fraction location of semispan, spars: [[absstart, absend, fractchordloc, thickness], []], sparThickness: [[[Thicknesses of spar], endpoint], [[Thicknesses of spar2], endpoint2]], stringersTop = [[starty, endy, fraction of chord, stringer]] flangeThickness = same as spar thickness
+wingbox = Wingbox(ribLocations=[], spars=[[0, 30, 0.15, 0.01], [0, 30, 0.6, 0.01], [0, 15, 0.375, 0.01]], stringersTop=[[0, 35, 0.3, stringer]], stringersBottom=[[0, 10, 0.4, stringerBottom]], sparFlangeConnectionStringerShape=stringer, flangeThicknesses=[[[0.01, 0.01], 30]], crosssectionAmount=200)
+#wingbox = Wingbox(ribLocations=[], spars=[[0, 30, 0.16, 0.01], [0, 30, 0.65, 0.01], [0, 15, 0.405, 0.01]], stringersTop=[[0, 35, 0.3, stringer]], stringersBottom=[[0, 10, 0.4, stringerBottom]], sparFlangeConnectionStringerShape=stringer, flangeThicknesses=[[[0.01, 0.01], 30]], crosssectionAmount=200)
+wingbox.draw(top=False)
 
-wingbox.drawInertia(wingbox.ixx)
-wingbox.drawInertia(wingbox.izz)
-wingbox.drawInertia(wingbox.ixz)
-wingbox.drawInertia(wingbox.iyy)
+#set moments
+wingbox.shearzx = normalForce.getShearForce(fidelity=20)
+wingbox.mxFunc = normalForce.getMomentDistribution()
+wingbox.myFunc = twistMoment.getMomentDistribution()
+
+wingbox.drawInertias()
+wingbox.drawMaterialMassDistribution()
+wingbox.drawFuelMassDistribution()
+
+print(wingbox.getGeneratedCrosssectionAtY(0).getMaxShearStress(50000, 100000))
+
+posY = 5
+wingbox.getGeneratedCrosssectionAtY(posY).drawCrosssection(drawCentroid=True, drawSidewallCenterlines=True, drawBendingStress=True, Mx=wingbox.mxFunc(posY), Mz=0)
+
+max, min = wingbox.getMaximumMinimumNormalStress()
+print("Max stress", max[0], "at y:", max[1].yLocation, "at point:", max[2])
+max[1].drawCrosssection(drawBendingStress=True, Mx=wingbox.mxFunc(max[1].yLocation), Mz=0)
+print("Min stress", min[0], "at y:", min[1].yLocation, "at point:", min[2])
+min[1].drawCrosssection(drawBendingStress=True, Mx=wingbox.mxFunc(min[1].yLocation), Mz=0)
 
 
+#deflection
+wingbox.drawDeflection(wingbox.getVerticalDeflectionFunction(fidelity=20), axisSameScale=False)
+print(wingbox.getVerticalDeflectionAtY(AircraftProperties.Planform["span"] / 2))
 
-while True:
-    pos = int(input("Crossection at location in m:"))
-    print(wingbox.getGeneratedCrosssectionAtY(pos).yLocation)
-    wingbox.getGeneratedCrosssectionAtY(pos).drawWingbox(drawCentroid=True, drawSidewallCenterlines=True)
+wingbox.drawTwist(wingbox.getTwistFunction(), degrees=True)

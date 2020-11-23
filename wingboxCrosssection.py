@@ -4,9 +4,12 @@ import numpy as np
 from Polygon import Polygon
 import airfoilDataParser
 from aircraftProperties import AircraftProperties
+import operator
 
 
 class WingboxCrossection:
+    __yield = AircraftProperties.WingboxMaterial["yield strength"]
+    __ultimate = AircraftProperties.WingboxMaterial["ultimate strength"]
 
     def __init__(self, chordLength, sparLocations, sparThicknesses, flangeThicknesses, stringersTop, stringersBottom, yLocation=0):
         #spar locations
@@ -16,9 +19,9 @@ class WingboxCrossection:
         self.yLocation = yLocation
 
         #spars
-        self.sparLocations = sparLocations
-        self.sparAbsoluteLocations = [i * self.chordLength for i in self.sparLocations] # m
-        self.sparThicknesses = sparThicknesses
+        self.sparAbsoluteLocations = sorted(sparLocations) # m
+        self.sparLocations = [i/self.chordLength for i in self.sparAbsoluteLocations]
+        self.sparThicknesses = sorted(sparThicknesses)
 
         self.numSections = len(sparLocations) - 1 #number of Sections
 
@@ -73,6 +76,7 @@ class WingboxCrossection:
         #calculate total enclosed area and crossectional area
         self.totalCrossectionalArea = self.__getTotalCrosssectionalArea()
         self.enclosedArea = self.__getEnclosedArea()
+        self.internalArea = self.__getInternalArea()
 
         #get centroid
         self.centroid = self.__getCentroid()
@@ -88,7 +92,7 @@ class WingboxCrossection:
         #calculate inertias
         self.ixx, self.izz = self.__getIxxIzz()
         self.izx = self.__getIzx()
-        self.iyy = self.__getIyy() # calculates the iyy using the thin walled assumption, It therefore neglectes contributionof the stringers
+        self.j = self.__getIyy() # calculates the iyy using the thin walled assumption, It therefore neglectes contributionof the stringers
 
     # uses the forward and aft spar as fraction of chord, returns the coordinates of the wing box corners as a fraction of the chord in a list of tuples,
     def __getOuterCornerCoordinates(self):
@@ -204,19 +208,16 @@ class WingboxCrossection:
 
     #iyy, with multisection method from appendix d1.3 of the readder, the equations are put into a lin equation solver, q1, q2, ....qn, dtheta/dy
     def __getIyy(self):
-        totalInertia = 0 #m^4
+        return self.__getMulticellTorsion(1)[-1]**-1
 
-        #test according to this: https://www.youtube.com/watch?v=m-2KBd3hEKQ
-        #self.centerLinePolygons[0] = Polygon([[0,0], [12.5, 0], [12.5, 12.5], [0, 12.5]])
-        #self.centerLinePolygons[1] = Polygon([[0,0], [12.5, 0], [12.5, 12.5], [0, 12.5]]).getTranslatedPolygon([12.5, 0])
-        #self.numSections = 2
-        #self.perSectionThicknesses = [[1.25, 1.25, 1.25, 1.25], [1.25, 1.25, 1.25, 1.25]]
+    def __getMulticellTorsion(self, Torque):
+        totalInertia = 0 #m^4
 
         #left side
         a = []
         #right side
         b = [0 for i in range(self.numSections + 1)] # always results in 0 for
-        b[0] = 1 # except for first row, where you apply torque of 1, see reader for explanation
+        b[0] = Torque # except for first row, where you apply torque of 1, see reader for explanation
 
         #add first row, different procedure
         firstrow = [0 for i in range(self.numSections + 1)]
@@ -258,7 +259,7 @@ class WingboxCrossection:
             row[-1] = -1
             a.append(row)
         x = np.linalg.solve(a, b)
-        return x[-1]**-1
+        return x
 
     # calculate the centroid and returns it ass coordinate
     def __placeStringers(self):
@@ -285,6 +286,12 @@ class WingboxCrossection:
             sum += i.getArea()
         return sum
 
+    def __getInternalArea(self):
+        sum = 0
+        for i in self.insidePolygons:
+            sum += i.getArea()
+        return sum
+
     def __getTotalCrosssectionalArea(self):
         totalArea = 0
 
@@ -296,8 +303,84 @@ class WingboxCrossection:
 
         return totalArea
 
-    def drawWingbox(self, drawSidewallCenterlines=False, drawCentroid=False):
+    #this method is not very general and assumes that the maximum shear stress occurs at the left spar on the neutral axis
+    def getMaxShearStress(self, V, My, takeIntoAccountStringers=True):
+        Q = 0
+
+        outsideCut = self.outsidePolygon.getCutByY(self.centroid[1], getTop=True)
+        Q += abs(outsideCut.getCentroid()[1] - self.centroid[1]) * outsideCut.getArea()
+
+        for i in self.insidePolygons:
+            cut = i.getCutByY(self.centroid[1], getTop=True)
+            Q -= abs(cut.getCentroid()[1] - self.centroid[1]) * cut.getArea()
+
+        if takeIntoAccountStringers:
+            for i in self.stringerPolygons:
+                if i.getCentroid()[1] > self.centroid[1]:
+                    Q -= abs(i.getCentroid()[1] - self.centroid[1]) * i.getArea()
+
+        taoShear = (V*Q)/(self.ixx*self.sparThicknesses[0])
+
+        qs = self.__getMulticellTorsion(My)
+        taoTorque = abs(qs[0]/self.sparThicknesses[0])
+        return taoTorque + taoShear
+
+    def getBendingStressAtPoint(self, Mx, Mz, x, z):
+        return ((self.ixx * Mz - self.izx * Mx)/(self.ixx * self.izz - self.izx**2))*x + ((self.izz * Mx - self.izx * Mz)/(self.ixx * self.izz - self.izx**2))*z
+
+    def addBendingStressHeatMapPlot(self, Mx, Mz, points=200, ultimateScale=False, yieldScale=False):
+        xVals = []
+        zVals = []
+        intensity = []
+
+        lines = [[self.outsidePolygon.coords[0], self.outsidePolygon.coords[3]],
+                 [self.outsidePolygon.coords[1], self.outsidePolygon.coords[2]]]
+
+        verticalLines = [[self.outsidePolygon.coords[0], self.outsidePolygon.coords[1]],
+                         [self.outsidePolygon.coords[2], self.outsidePolygon.coords[3]]]
+
+        if self.numSections > 1:
+            for i in range(self.numSections-1):
+                verticalLines.append([self.centerLinePolygons[i].coords[3], self.centerLinePolygons[i].coords[2]])
+
+        for line in lines:
+            #along top lines with certain x values
+            xtemp = np.linspace(self.sparAbsoluteLocations[0], self.sparAbsoluteLocations[-1], points)
+            xVals.extend(xtemp)
+            zVals.extend(self.getZfromXLine(line[0], line[1], xtemp))
+
+        for line in verticalLines:
+            #along side lines with certain z values
+            for i in np.linspace(line[0][1], line[1][1], points):
+                zVals.append(i)
+                xVals.append(line[0][0])
+
+        for index in range(len(xVals)):
+            intensity.append(self.getBendingStressAtPoint(Mx, Mz, xVals[index], zVals[index]))
+
+        if ultimateScale:
+            norm = plt.Normalize(vmin=-self.__ultimate, vmax=self.__ultimate)
+            plt.scatter(xVals, zVals, c=intensity, norm=norm, cmap="plasma")
+        elif yieldScale:
+            norm = plt.Normalize(vmin=-self.__yield, vmax=self.__yield)
+            plt.scatter(xVals, zVals, c=intensity, norm=norm, cmap="plasma")
+        else:
+            plt.scatter(xVals, zVals, c=intensity, cmap="plasma")
+
+        plt.colorbar()
+
+    def drawBendingStressHeatmap(self, Mx, Mz, points=300, ultimateScale=False, yieldScale=False):
+        self.addBendingStressHeatMapPlot(Mx, Mz, points, ultimateScale, yieldScale)
+        plt.gca().set_aspect('equal', adjustable='box')
+
+        plt.show()
+
+    def drawCrosssection(self, drawSidewallCenterlines=False, drawCentroid=False, drawBendingStress=False, Mx=None, Mz=0):
         plt.clf()
+
+        if drawBendingStress:
+            if Mx is not None:
+                self.addBendingStressHeatMapPlot(Mx, Mz, yieldScale=True)
 
         #plot top and bottom line
         plt.plot([i*self.chordLength for i in self.airfoilData[0][0]], [i*self.chordLength for i in self.airfoilData[0][1]], color="blue")

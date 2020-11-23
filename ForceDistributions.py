@@ -5,8 +5,9 @@ import scipy as sp
 from scipy import integrate
 from math import sin, cos, radians, degrees
 import matplotlib.pyplot as plt
+from scipy import interpolate
 
-def a (x):
+def a(x):
     return AerodynamicLoading.Liftacc(x)
 def b (x):
     return AerodynamicLoading.Dragacc(x)
@@ -19,6 +20,7 @@ def e (x):
 def f (x):
     return AerodynamicLoading.Momentacc10(x)
 
+
 Lift = integrate.quad(a, 0, AircraftProperties.Planform["span"]/2)
 Drag = integrate.quad(b, 0, AircraftProperties.Planform["span"]/2)
 Moment = integrate.quad(c, 0, AircraftProperties.Planform["span"]/2)
@@ -26,7 +28,7 @@ Lift10 = integrate.quad(d, 0, AircraftProperties.Planform["span"]/2)
 Drag10 = integrate.quad(e, 0, AircraftProperties.Planform["span"]/2)
 Moment10 = integrate.quad(f, 0, AircraftProperties.Planform["span"]/2)
 
-AoA0 = 0      #deg
+AoA0 = 0      # deg
 AoA10 = 10
 NormalF0lst = []
 NormalF10lst = []
@@ -83,6 +85,6 @@ def drawgraphs():
     plt.plot(X, Y10, color="blue")
     plt.ylabel("shear")
     plt.show()
-        
-drawgraphs()
 
+
+drawgraphs()

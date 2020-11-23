@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import math
+import operator
 
 class Polygon:
     #x horizontal, z vertical, y perpendicular
@@ -111,12 +111,68 @@ class Polygon:
 
         return Polygon(newCoords, newRefs)
 
+
+    # dont question this absolute mess
+    def getCutByY(self, y, getBottom=False, getTop=False):
+        if getBottom == getTop:
+            raise Exception("You can only get one side of the Polygon")
+
+        newCoords = []
+
+        if getBottom:
+            comp = operator.lt
+        else:
+            comp = operator.ge
+
+        i = -1
+
+        for coord in range(self.numCorners):
+            if comp(self.coords[coord][1], y):
+                i = coord
+                break
+
+        if i == -1:
+            return None
+
+        intersectionsFound = 0
+        initiali = i
+        coordIndex = i % self.numCorners
+        prevCoordIndex = (i - 1) % self.numCorners
+
+        while True:
+
+            if comp(self.coords[coordIndex][1], y):  # if on the desired side
+                if intersectionsFound == 1:
+                    coord1 = self.coords[coordIndex]
+                    coord2 = self.coords[prevCoordIndex]
+                    k = (coord1[0] - coord2[0]) / (coord1[1] - coord2[1])
+                    d = coord1[0] - k * coord1[1]
+                    newCoords.append([k * y + d, y])
+                    intersectionsFound += 1
+                    if coordIndex == initiali:
+                        break
+                newCoords.append(self.coords[coordIndex])
+            elif intersectionsFound == 0:
+                # this index and previous index
+                coord1 = self.coords[coordIndex]
+                coord2 = self.coords[prevCoordIndex]
+                k = (coord1[0] - coord2[0]) / (coord1[1] - coord2[1])
+                d = coord1[0] - k * coord1[1]
+                newCoords.append([k * y + d, y])
+                intersectionsFound += 1
+            i += 1
+            coordIndex = i % self.numCorners
+            prevCoordIndex = (i - 1) % self.numCorners
+            if coordIndex == initiali and intersectionsFound != 1:
+                break
+        return Polygon(newCoords)
+
     def copy(self):
         return Polygon(self.coords.copy(), self.referencePoints.copy())
 
     #steiner term for both x and z axis in a list
     def getSteinerTermIxxIzz(self, point):
-        return [(self.getCentroid()[0] - point[0])**2 * self.getArea(), (self.getCentroid()[1] - point[1])**2 * self.getArea()]
+        return [(self.getCentroid()[1] - point[1])**2 * self.getArea(), (self.getCentroid()[0] - point[0])**2 * self.getArea()]
 
     # steiner term for product inertia at point
     def getSteinerTermIxz(self, point):
