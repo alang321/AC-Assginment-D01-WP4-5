@@ -40,7 +40,7 @@ Cd10Func = sp.interpolate.interp1d(Ylst, ICd10lst, kind='cubic', fill_value="ext
 Cm0Func = sp.interpolate.interp1d(Ylst, Cm0lst, kind='cubic', fill_value="extrapolate")
 Cm10Func = sp.interpolate.interp1d(Ylst, Cm10lst, kind='cubic', fill_value="extrapolate")
 
-coefficientFunctions = [[Cl0Func, Cl10Func],
+coefficientFunctionsIncompressible = [[Cl0Func, Cl10Func],
                         [Cd0Func, Cd10Func],
                         [Cm0Func, Cm10Func]]
 
@@ -113,25 +113,33 @@ Cm_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span
 
 
 def getLiftDragMoment(cL, xoverc, v, altitude):
-    t, p, rho = getISAParameters(altitude)
+    temp, p, rho = getISAParameters(altitude)
+    getMachNumber = v/(1.4*287.05*temp)**0.5
     q = 1 / 2 * rho * (v**2)
+
+
 
 def getCoefficientatAOA(aoa, index):
     return ((np.sin(aoa)*coefficient[index][1]-coefficient[index][0])/np.sin(np.deg2rad(10)))+coefficient[index][0]
 
+# calculation AoA
+def getAOAatCL(CL_d):
+    return math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.radians(10)))
+
 def getBeta(machNumber):
     return (1-machNumber**2)**0.5
 
-def getMachNumber(v, temp):
-    return v/(1.4*287.05*temp)**0.5
+def getCompressionCoefficients(machNumber):
+    clalpha = getClAlpha()
+    cd0 = AircraftProperties.Planform["cd0"]
+
+
+
+
 
 def getClAlpha():
     return
 
-# calculation AoA
-def getAOAatCL(CL_d):
-    AoAL = math.degrees(math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.radians(10))))
-    return AoAL
 
 def getISAParameters(h):
     g = 9.80665

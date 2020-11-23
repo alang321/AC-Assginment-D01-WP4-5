@@ -25,7 +25,8 @@ class AircraftProperties:
         "yMAC": 11.72,  # $m$
         "dihedral": 2.123,  # $deg$
         "forward spar fraction of chord": 0.15,  # -
-        "aft spar fraction of chord": 0.6  # -
+        "aft spar fraction of chord": 0.6,  # -
+        "cd0 wing": 0.00317965138
     }
     Airfoil = {
         "t/c": 14.22,  # $\%$
