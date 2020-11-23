@@ -32,7 +32,7 @@ Cm0 = sp.interpolate.interp1d(Ylst, Cm0lst, kind='cubic', fill_value="extrapolat
 Cm10 = sp.interpolate.interp1d(Ylst, Cm10lst, kind='cubic', fill_value="extrapolate")
 
 rho = 1.225
-V = 10
+V = 230
 q = 1 / 2 * rho * (V ** 2)
 Liftacclst = []
 for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
