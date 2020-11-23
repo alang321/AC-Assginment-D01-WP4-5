@@ -45,3 +45,4 @@ rho_h_dic = {'SL': rho_0, 'FL150': rho_1, 'FL310': rho_c}
 T_dic = {'SL': T_0, 'FL150': T_1, 'FL310': T_c}
 h_dic = {'SL': 0, 'FL150': 4572, 'FL310': 9449}
 weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
+
