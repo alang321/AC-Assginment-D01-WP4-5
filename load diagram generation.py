@@ -5,12 +5,11 @@ Created on Mon Nov 16 15:51:54 2020
 
 @author: olivierheu
 """
-
-
 import numpy as np 
 import matplotlib.pyplot as plt
 import math
 import loadingdiagrams
+
 
 ###---MANEUVRE LOAD DIAGRAM---###
 def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1):
@@ -44,15 +43,16 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1):
  
     return plt.show()
 
-for sets in V_all_list_sorted:
+for i in range(len(V_all_list_sorted)):
+    for speeds in V_all_list_sorted[i]:
 
-    V_A = sets[0]
-    V_D = sets[2]
-    V_F = sets[3]
-    V_S0 = sets[4]
-    V_S1 = sets[5]
+        V_A = sets[0]
+        V_D = sets[2]
+        V_F = sets[3]
+        V_S0 = sets[4]
+        V_S1 = sets[5]
 
-    plot_maneuver(V_A, V_D, V_F, V_S0, V_S1)
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1)
 
 
 
