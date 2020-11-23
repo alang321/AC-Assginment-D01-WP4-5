@@ -1,5 +1,8 @@
 from aircraftProperties import AircraftProperties
 import math
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 ###---constants---###
 
@@ -47,13 +50,14 @@ weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
 
 
 
-###---velocity calculations---###
+###---maneuver calculations---###
 
-def get_V_C(T_h):
+def get_VC_VD(T_h):
 
     V_C = M_c * math.sqrt(T_h * 402.058)
+    V_D = V_C * 1.25
 
-    return V_C
+    return V_C, V_D
 
 def get_V_S0(W, rho_h):                                                 #stall speed with flaps
     
@@ -73,11 +77,20 @@ def get_V_A(V_S1):
 
     return V_A
 
-def get_V_D(V_C):
+def get_V_F(rho_h):
+    V_F1 = 1.6* get_V_S1(MTOW, rho_h) 
+    V_F2 = 1.8* get_V_S1(ZFW, rho_h)
+    V_F3 = 1.8* get_V_S0(ZFW, rho_h)
 
-    V_D = V_C * 1.25
+    if V_F1 > V_F2 and V_F1 > V_F3:
+        V_F = V_F1
+    elif V_F2 > V_F3:
+        V_F = V_F2
+    else:
+        V_F = V_F3
 
-    return V_D
+    return V_F
+    
 
 
 ###---aerodynamic calculations---###
@@ -159,6 +172,7 @@ V_S1_values = {}
 V_D_values = {}
 V_A_values = {}
 V_B_values = {}
+V_F_values = {}
 
 
           
@@ -168,9 +182,8 @@ for weights, values in weights_dic.items():
         nametagC = 'V_C {} {}'.format(weights, altitudes)
         nametagD = 'V_D {} {}'.format(weights, altitudes)
 
-        V_C = get_V_C(temperatures)
-        V_D = get_V_D(V_C)
-
+        V_C, V_D = get_VC_VD(temperatures)
+        
         V_C_values[nametagC] = V_C
         V_D_values[nametagD] = V_D
 
@@ -181,10 +194,12 @@ for weights, values in weights_dic.items():
         nametagS1 = 'V_S1 {} {}'.format(weights, altitudes)
         nametagA = 'V_A {} {}'.format(weights, altitudes)
         nametagB = 'V_B {} {}'.format(weights, altitudes)
+        nametagF = 'V_F {} {}'.format(weights, altitudes)
 
         V_S0 = get_V_S0(values, densitys)
         V_S1 = get_V_S1(values, densitys)
         V_A = get_V_A(V_S1)
+        V_F = get_V_F(densitys)
 
         altitude = h_dic[altitudes]
         U_ref = get_U_ref(altitude)
@@ -196,22 +211,22 @@ for weights, values in weights_dic.items():
         V_S1_values[nametagS1] = V_S1
         V_A_values[nametagA] = V_A
         V_B_values[nametagB] = V_B
+        V_F_values[nametagF] = V_F
+        
 
-print(V_S0_values)
-print(V_S1_values)
-print(V_D_values)
-print(V_A_values)
+
+###---converting results to usable list---###        
         
-        
-V_all_dict = {}             
+V_all_dict = {}           
 V_all_dict.update(V_A_values)
+V_all_dict.update(V_C_values)
 V_all_dict.update(V_D_values)
-V_all_dict.update(V_D_values)
-#V_all_dict.update(V_F_values)
+V_all_dict.update(V_F_values)
+V_all_dict.update(V_S0_values)
 V_all_dict.update(V_S1_values)
 V_all_list = list(V_all_dict.values())
 
-#print(V_all_dict)
+
 
 OEW_SL = []
 OEW_FL150 = []
@@ -243,7 +258,82 @@ for i in range(len(V_all_list)):
     elif i % 9 == 8:
         MTOW_FL310.append(V_all_list[i])
 
-print(OEW_SL)
+V_all_list_sorted = [OEW_SL, OEW_FL150, OEW_FL310, ZFW_SL, ZFW_FL150, ZFW_FL310, MTOW_SL, MTOW_FL150, MTOW_FL310]
+print(len(V_all_list_sorted))
+
+print(V_all_list_sorted[0])
+
+
+
+
+
+###---MANEUVRE LOAD DIAGRAM---###
+def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
+
+    def f(x):
+        return (x / V_S1)**2
+                  
+    speeds = [V_A, V_D, V_D, V_F, V_S1]  
+    n_values = [n_max, n_max, 0, n_min, n_min]
+
+    plt.plot(speeds, n_values, 'black')
+    plt.title(title)
+    plt.xlabel('Velocity')
+    plt.ylabel('Load')
+    plt.text(V_A, n_max, 'V_A') #add text to diagram
+
+
+    x1 = np.linspace(0,V_A, 1000)
+    x2 = np.linspace(0, V_S1 * math.sqrt(2), 1000)
+    x3 = np.linspace(0, V_S1, 1000)
+    y2 = []      #flaps down curve n values
+
+    for i in x2:
+        a = (i / V_S0)**2
+        a = min(a, 2)
+        y2.append(a)
+
+    plt.plot(x1, f(x1), 'black')  # (0,0) to V_A curve
+    plt.plot(x2, y2, 'black')  #flaps down curve
+    plt.plot(x3, -f(x3), 'black')
+    plt.axvline(x=V_A, color = 'black', linestyle = '--')
+    plt.axvline(x=V_S0, color = 'black', linestyle = '--')
+ 
+    return plt.show()
+
+plt.figure()
+for i in range(len(V_all_list_sorted)):
+
+    V_A = V_all_list_sorted[i][0]
+    V_D = V_all_list_sorted[i][2]
+    V_F = V_all_list_sorted[i][3]
+    V_S0 = V_all_list_sorted[i][4]
+    V_S1 = V_all_list_sorted[i][5]
+        
+    if i  == 0:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and SL')
+    elif i % 9 == 1:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL150')
+    elif i % 9 == 2:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL310')
+    elif i % 9 == 3:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and SL')
+    elif i % 9 == 4:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL150')
+    elif i % 9 == 5:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL310')
+    elif i % 9 == 6:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and SL')
+    elif i % 9 == 7:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL150')
+    elif i % 9 == 8:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL310')
+            
+
+
+
+
+
 
 
     
