@@ -35,6 +35,9 @@ C_L_max_flaps = AircraftProperties.Lift["CL max with flaps"]
 C_L_max = AircraftProperties.Lift["CL max without flaps"]
 C_MAC = AircraftProperties.Planform["MAC"]
 C_L_alpha = 4.62
+AR = AircraftProperties.Planform["aspect ratio"]
+half_c_sweep = AircraftProperties.Planform["half-chord sweep"]
+eta = 0.95
 
 
 #maximimum load factors
@@ -98,15 +101,34 @@ def get_V_F(rho_h):
     return V_F
 
 ###--- Gust Calculations ---###
+def get_C_L_alpha_h(V, T_h):
+
+    M = V/(math.sqrt(T_h * 402.058))
+
+    if M < 0.70:
+        beta = math.sqrt(1-M**2)
+    else:
+        beta = math.sqrt(1-0.70**2)
+
+    term1 = 2*pi*AR
+    term2 = 4+(AR*beta/eta)**2
+    term3 = ((math.tan(half_c_sweep))/beta)**2
+
+
+    C_L_alpha_h = term1/(2 + math.sqrt(4+(term2)*(term3)))
+
+    return C_L_alpha_h
+
+
 def get_F_g(altitude):
 
     F_g = ((1.0 - F_g_init)/Z_mo) * altitude + F_g_init
 
     return F_g
 
-def get_weight_factor(W, rho_h):
+def get_weight_factor(W, rho_h, C_L_alpha_h):
 
-    weight_factor = (2 * W) / (S * rho_h * g * C_MAC * C_L_alpha)
+    weight_factor = (2 * W) / (S * rho_h * g * C_MAC * C_L_alpha_h)
 
     return weight_factor
 
@@ -123,9 +145,9 @@ def get_U_ref(altitude):
         U_ref = 17.07 - (0.000801*4572) - (0.000513998*(altitude-4572))
     return U_ref
 
-def get_V_B(W, K_g, V_S1, V_C, U_ref):
+def get_V_B(W, K_g, V_S1, V_C, U_ref, C_L_alpha_h):
 
-    V_B = V_S1 * math.sqrt(1+ (K_g * rho_0 * U_ref * V_C * C_L_alpha)/(2*W))
+    V_B = V_S1 * math.sqrt(1+ (K_g * rho_0 * U_ref * V_C * C_L_alpha_h)/(2*W))
 
     return V_B
 
@@ -147,9 +169,9 @@ def get_omega(V, H):
 
     return omega
 
-def get_time_constant(W, V, rho_h):
+def get_time_constant(W, V, rho_h, C_L_alpha_h):
 
-    time_constant = (W*2)/(S * C_L_alpha * V * rho_h * g)
+    time_constant = (W*2)/(S * C_L_alpha_h * V * rho_h * g)
 
     return time_constant
 
@@ -187,7 +209,7 @@ for weights, values in weights_dic.items():
     
         U_ref = get_U_ref(h)
         F_g = get_F_g(h)
-        weight_factor = get_weight_factor(values, rho_h)
+        weight_factor = get_weight_factor(values, rho_h, C_L_alpha)
         K_g = get_K_g(weight_factor)
         
         V_C, V_D = get_VC_VD(T_h)
@@ -195,7 +217,7 @@ for weights, values in weights_dic.items():
         V_S1 = get_V_S1(values, rho_h)
         V_A = get_V_A(V_S1)
         V_F = get_V_F(rho_h)
-        V_B = get_V_B(values, K_g, V_S1, V_C, U_ref)
+        V_B = get_V_B(values, K_g, V_S1, V_C, U_ref, C_L_alpha)
         
         V_tot.append(V_C)
         V_tot.append(V_D)
@@ -206,9 +228,9 @@ for weights, values in weights_dic.items():
         V_tot.append(V_B)
 
         for V in V_tot:
-
-            time_constant = get_time_constant(values, V, rho_h)
-
+            C_L_alpha_h = get_C_L_alpha_h(V, T_h)
+            time_constant = get_time_constant(values, V, rho_h, C_L_alpha_h)
+            
             for H in range(9, 108, 3):
                 omega = get_omega(V, H)
                 U_ds0 = get_U_ds(U_ref, F_g, H)
@@ -219,7 +241,7 @@ for weights, values in weights_dic.items():
                 else:
                     U_ds = U_ds0 * 0.5
 
-                for t in np.linspace(0, n, 100):
+                for t in np.linspace(0, n, 1000):
                     
                     gust_load_factor = get_gust_load_factor(t, U_ds, omega, time_constant)
 
