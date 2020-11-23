@@ -22,7 +22,7 @@ ICd10lst = rawdata10[5]
 Cm0lst = rawdata0[7]
 Cm10lst = rawdata10[7]
 
-#wing coefficients for 0 at 10 deg aoa
+# wing coefficients for 0 at 10 deg aoa
 CL_0 = 0.430299
 CL_10 = 1.252323
 Cd_0 = 0.006490
@@ -31,7 +31,7 @@ Cm_0 = -0.621253
 Cm_10 = -1.60557
 
 # Makes lists into functions
-#coefficeint functions at span location mach <0.2
+# coefficeint functions at span location mach <0.2
 Chord = sp.interpolate.interp1d(Ylst, Chordlst, kind='cubic', fill_value="extrapolate")
 Cl0Func = sp.interpolate.interp1d(Ylst, Cl0lst, kind='cubic', fill_value="extrapolate")
 Cl10Func = sp.interpolate.interp1d(Ylst, Cl10lst, kind='cubic', fill_value="extrapolate")
@@ -83,8 +83,6 @@ Momentacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["
                                       fill_value="extrapolate")
 
 
-
-
 # Distribution at random AoA / Coeff
 CL_0 = 0.430299
 CL_10 = 1.252323
@@ -116,22 +114,28 @@ def getLiftDragMoment(cL, xoverc, v, altitude):
     t, p, rho = getISAParameters(altitude)
     q = 1 / 2 * rho * (v**2)
 
+
 def getCoefficientatAOA(aoa, index):
     return ((np.sin(aoa)*coefficient[index][1]-coefficient[index][0])/np.sin(np.deg2rad(10)))+coefficient[index][0]
+
 
 def getBeta(machNumber):
     return (1-machNumber**2)**0.5
 
+
 def getMachNumber(v, temp):
     return v/(1.4*287.05*temp)**0.5
 
+
 def getClAlpha():
     return
+
 
 # calculation AoA
 def getAOAatCL(CL_d):
     AoAL = math.degrees(math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.radians(10))))
     return AoAL
+
 
 def getISAParameters(h):
     g = 9.80665
