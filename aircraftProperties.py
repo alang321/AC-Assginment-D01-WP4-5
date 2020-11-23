@@ -29,7 +29,8 @@ class AircraftProperties:
     }
     Airfoil = {
         "t/c": 14.22,  # $\%$
-        "airfoil identifier": "NASA20714"  # -
+        "airfoil identifier": "NASA20714",  # -
+        "zero lift aoa": -4.7 #deg
     }
     Aileron = {
         "span fract of wingspan": 0.28,  # -
@@ -98,8 +99,9 @@ class AircraftProperties:
         "most forward center of gravity": 33.0952561849258,  # m
         "most aft center of gravity": 33.5527887903292  # m
     }
-    Fuel_volume = {
-        "total fuel volume required": 88.898  # $m^3$
+    Fuel = {
+        "total fuel volume required": 88.898,  # $m^3$
+        "fuel density": 804, # kg/m^3
     }
     Cruise_constants = {
         "cruise altitude": 9448,             # $m$
@@ -117,5 +119,9 @@ class AircraftProperties:
         "Aluminum Name": "AL6061-T",
         "shear modulus": 26 * 10**9,
         "e modulus": 68.9 * 10**9,
+        "density": 2700, #kg/m^3
+        "yield strength": 2.76 * 10**8, #Pa
+        "ultimate strength": 3.10 * 10**8, #Pa
+        "shear strength": 2.07 * 10**8, #Pa
     }
 

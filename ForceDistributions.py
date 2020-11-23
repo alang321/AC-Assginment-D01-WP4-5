@@ -7,7 +7,7 @@ from math import sin, cos, radians, degrees
 import matplotlib.pyplot as plt
 from scipy import interpolate
 
-def a (x):
+def a(x):
     return AerodynamicLoading.Liftacc(x)
 def b (x):
     return AerodynamicLoading.Dragacc(x)
