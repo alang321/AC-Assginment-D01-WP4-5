@@ -1,12 +1,12 @@
 from aircraftProperties import AircraftProperties
 from wingboxCrosssection import WingboxCrossection
-import AerodynamicDataThingy
+import AerodynamicLoading
 from Polygon import StringerType
 from wingbox import Wingbox
 
 print(AircraftProperties.Fuselage["Fuselage length"])
 
-#stringer = StringerType([[0, 0], [0, -1/1000], [19/1000, -1/1000], [19/1000, -20/1000], [20/1000, -20/1000], [20/1000, 0]], [[0, 0], [20/1000, 0]])
+# stringer = StringerType([[0, 0], [0, -1/1000], [19/1000, -1/1000], [19/1000, -20/1000], [20/1000, -20/1000], [20/1000, 0]], [[0, 0], [20/1000, 0]])
 stringer = StringerType([[0, 0], [0, -3/200], [17/200, -3/200], [17/200, -20/200], [20/200, -20/200], [20/200, 0]], [[0, 0], [20/200, 0]])
 stringer.drawUnplacedStringer()
 
