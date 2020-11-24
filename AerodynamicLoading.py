@@ -58,13 +58,10 @@ def getNormalTangentialMomentAOA(cLd, xovercCentroid, v, altitude):
     else:
         adjustedCoefficients = [[CL_0, CL_10], [Cd_0, Cd_10], [Cm_0, Cm_10]]
 
-    print(adjustedCoefficients)
-
     aoa = getAOAatCL(cLd, adjustedCoefficients)
 
     CDd = getCoefficientatAOA(aoa, 1, adjustedCoefficients)
     CMd = getCoefficientatAOA(aoa, 2, adjustedCoefficients)
-    print(cLd, CDd, CMd)
 
     clFreestream = getCoefficientDistribution(cLd, 0, machNumber, adjustedCoefficients)
     cdFreestream = getCoefficientDistribution(CDd, 1, machNumber, adjustedCoefficients)
@@ -95,7 +92,6 @@ def getCoefficientDistribution(desiredCoefficient, index, machNumber, adjustedCo
 
 
 def getCoefficientatAOA(aoa, index, adjustedCoefficients):
-    print(adjustedCoefficients[index], aoa)
     return ((np.sin(aoa)*(adjustedCoefficients[index][1]-adjustedCoefficients[index][0]))/np.sin(np.deg2rad(10)))+adjustedCoefficients[index][0]
 
 
@@ -147,10 +143,6 @@ def getISAParameters(h):
 
     return T1, p1, rho
 
-# print(AoAL)
-# print(AoAD)
-# print(AoAM)
-
 def drawAerodynamicCoefficients(fidelity=50):
     a = np.linspace(0, AircraftProperties.Planform["span"]/2, fidelity)
     fig, plots = plt.subplots(3, 2)
@@ -166,7 +158,7 @@ def drawAerodynamicCoefficients(fidelity=50):
 
 def drawAerodynamicForces(aerodynamicForces, fidelity=50):
     a = np.linspace(0, AircraftProperties.Planform["span"]/2, fidelity)
-    plotNames = ["Normal", "Tangential", "Moment at x/c"]
+    plotNames = ["Normal", "Tangential", "Distributed Moment at x/c"]
     plotUnits = ["N", "N", "Nm"]
     fig, plots = plt.subplots(3)
     fig.suptitle('Aerodynamic Forces\n', fontsize=16)
@@ -174,6 +166,7 @@ def drawAerodynamicForces(aerodynamicForces, fidelity=50):
         plots[row].plot(a, [aerodynamicForces[row](i) for i in a])
         plots[row].set_title(plotNames[row])
         plots[row].set(xlabel='semi-span [m]', ylabel=plotUnits[row])
+
     fig.tight_layout(pad=0.2)
 
     plt.show()

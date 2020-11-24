@@ -63,12 +63,6 @@ class Polygon:
         xlist, yList = zip(*coord)  # lists of x and y values
         plt.plot(xlist, yList, color=color, linestyle=linestyle, linewidth=linewidth)
 
-    def draw(self, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False):
-
-        plt.gca().set_aspect('equal', adjustable='box')
-        self.addToPlot(plt, color=color, drawRefPoints=drawRefPoints, drawPointIndices=drawPointIndices, linestyle=linestyle, linewidth=linewidth)
-        plt.show()
-
     def getMirroredPolygonX(self):
         transMatrix = [[1, 0],
                        [0, -1]]
@@ -232,6 +226,12 @@ class Polygon:
 
         return inertia
 
+    def draw(self, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False):
+
+        plt.gca().set_aspect('equal', adjustable='box')
+        self.addToPlot(plt, color=color, drawRefPoints=drawRefPoints, drawPointIndices=drawPointIndices, linestyle=linestyle, linewidth=linewidth)
+        plt.show()
+
 # a stringer class with some extra properties to the polygon class, this class is created with a stringer shape and an attachment point, this is then sort of a blue print for further stringers called with the function
 class StringerType:
     def __init__(self, coordinateList=None, baseAlignmentPoints=None, attachmentPoint=None, polygon=None): #attachmentLineIndices are the indices of the coordinates that form the "base line", so the line in contact with the sheet its attached to
@@ -270,9 +270,6 @@ class StringerType:
 
         return newStringerPolygon
 
-    def drawUnplacedStringer(self, color="red"):
-        self.stringerShape.draw(drawRefPoints=True, color=color)
-
     def getMirrorStringerX(self):
         return StringerType(polygon=self.stringerShape.getMirroredPolygonX())
 
@@ -288,3 +285,6 @@ class StringerType:
         angleAlignment = np.arctan((refpoints[1][1] - refpoints[0][1]) / (refpoints[1][0] - refpoints[0][0]))
 
         return angleAlignment - angleLine
+
+    def drawUnplacedStringer(self, color="red"):
+        self.stringerShape.draw(drawRefPoints=True, color=color)

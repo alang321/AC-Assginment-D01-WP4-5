@@ -32,7 +32,7 @@ class Wingbox:
         self.ribLines = []
         for rib in self.ribLocations:
             lexpos = self.leadingEdgeXPos(rib)
-            xVals = [lexpos, lexpos + self.chordAtY(rib)]
+            xVals = [lexpos, lexpos + self.getChordAtY(rib)]
             yVals = [rib, rib]
             self.ribLines.append([xVals, yVals])
 
@@ -41,7 +41,7 @@ class Wingbox:
         self.sparLines = []
         for spar in self.spars:
             spar[1] = min(spar[1], self.semispan)
-            xVals = [spar[2] * self.chordAtY(spar[0]) + self.leadingEdgeXPos(spar[0]), spar[2] * self.chordAtY(spar[1]) + self.leadingEdgeXPos(spar[1])]
+            xVals = [spar[2] * self.getChordAtY(spar[0]) + self.leadingEdgeXPos(spar[0]), spar[2] * self.getChordAtY(spar[1]) + self.leadingEdgeXPos(spar[1])]
             yVals = [0, spar[1]]
             self.sparLines.append([xVals, yVals])
 
@@ -56,7 +56,7 @@ class Wingbox:
             stringerLineList = []
             for stringer in stringerList:
                 stringer[1] = min(stringer[1], self.semispan)
-                xVals = [self.leadingEdgeXPos(stringer[0]) + stringer[2] * self.chordAtY(stringer[0]), self.leadingEdgeXPos(stringer[1]) + stringer[2] * self.chordAtY(stringer[1])]
+                xVals = [self.leadingEdgeXPos(stringer[0]) + stringer[2] * self.getChordAtY(stringer[0]), self.leadingEdgeXPos(stringer[1]) + stringer[2] * self.getChordAtY(stringer[1])]
                 yVals = [stringer[0], stringer[1]]
                 stringerLineList.append([xVals, yVals, stringer[3]])
             self.stringerLines.append(stringerLineList)
@@ -97,6 +97,9 @@ class Wingbox:
 
         self.totalMass = self.materialVolume * self.__density
 
+        self.normalForces = lambda y: 0
+        self.internalShear = [lambda y: 0, lambda y: 0, lambda y: 0]
+        self.internalMoments = [lambda y: 0, lambda y: 0, lambda y: 0]
         self.shearzx = lambda y: 0
         self.myFunc = lambda y: 0
         self.mxFunc = lambda y: 0
@@ -228,8 +231,8 @@ class Wingbox:
         for spar in self.spars:
             sparThicknesses.append(spar[3])
 
-        return WingboxCrossection(chordLength=self.chordAtY(posY), sparLocations=spars, sparThicknesses=sparThicknesses,
-                           flangeThicknesses=flangeThicknesses, stringersTop=stringers[0], stringersBottom=stringers[1], yLocation=posY)
+        return WingboxCrossection(chordLength=self.getChordAtY(posY), sparLocations=spars, sparThicknesses=sparThicknesses,
+                                  flangeThicknesses=flangeThicknesses, stringersTop=stringers[0], stringersBottom=stringers[1], yLocation=posY)
 
     def __getLineIntersection(self, xList, yList, posY):
         if yList[0] <= posY <= yList[1]:
@@ -240,114 +243,11 @@ class Wingbox:
         else:
             return None
 
-    def draw(self, top=True):
-        plt.clf()
-
-        if top:
-            plt.title("Top View")
-        else:
-            plt.title("Bottom View")
-
-        #Planform
-        rotatedPlanform = self.planformPolygon.getRotatedPolygon(np.deg2rad(90))
-        rotatedPlanform = rotatedPlanform.getTranslatedPolygon([-rotatedPlanform.coords[1][i] for i in range(2)])
-        rotatedPlanform.addToPlot(plt, color="red")
-
-        #draw ribs
-        for ribline in self.ribLines:
-            plt.plot(ribline[1], ribline[0], color="black")
-
-        #draw spars
-        for sparLine in self.sparLines:
-            plt.plot(sparLine[1], sparLine[0], color="blue")
-
-        #draw stringers
-        if top:
-            a = enumerate(reversed(self.stringerLines))
-            color = ["pink", "green"]
-        else:
-            a = enumerate(self.stringerLines)
-            color = ["green", "pink"]
-
-        for index, stringerLineList in a:
-            for stringer in stringerLineList:
-                plt.plot(stringer[1], stringer[0], color=color[index])
-
-        # x, y ranges and same scale
-        plt.ylim(-0.05*self.rootchord, 1.05 * self.rootchord)
-        plt.xlim(-0.05 * self.semispan, 1.05 * self.semispan)
-        plt.gca().set_aspect('equal', adjustable='box')
-
-        plt.show()
-
-    def drawInertias(self):
-        inertiaNames = [r"$I_{xx}$", r"$I_{zz}$", r"$I_{xz}$", "$J$"]
-        fig, plots = plt.subplots(2, 2)
-        fig.suptitle('Inertias')
-        for row in range(2):
-            for col in range(2):
-                plots[row, col].plot(self.ixxList[0], [self.inertiaFunctionsY[row * 2 + col](i) for i in self.ixxList[0]])
-                plots[row, col].set_title(inertiaNames[row * 2 + col])
-                plots[row, col].set(ylabel=r'Inertia [$m^4$]', xlabel='semi-span [m]')
-        fig.tight_layout(pad=1.5)
-
-        plt.show()
-
-    def drawDeflection(self, verticalDeflectionFunction, axisSameScale=False):
-        plt.title("Vertical Deflection")
-        plt.plot(self.ixxList[0], [verticalDeflectionFunction(i) for i in self.ixxList[0]])
-        plt.xlabel('semi-span [m]')
-        plt.ylabel('deflection [m]')
-
-        if axisSameScale:
-            plt.gca().set_aspect('equal', adjustable='box')
-
-        plt.show()
-
-    def drawTwist(self, twistDeflectionFunction, degrees=False):
-        plt.title("Twist")
-        if degrees:
-            plt.plot(self.ixxList[0], [np.rad2deg(twistDeflectionFunction(i)) for i in self.ixxList[0]])
-        else:
-            plt.plot(self.ixxList[0], [twistDeflectionFunction(i) for i in self.ixxList[0]])
-        plt.xlabel('semi-span [m]')
-        if degrees:
-            plt.ylabel('twist [deg]')
-        else:
-            plt.ylabel('twist [rad]')
-
-        plt.show()
-
-    def drawCentroidXatY(self):
-        plt.title("Centroid X Position at Y")
-        plt.plot(self.crossectionYLocations, [self.centroidDistFromC4AtYFunc(i) for i in self.crossectionYLocations])
-        plt.xlabel('semi-span [m]')
-        plt.ylabel(ylabel=r'x ccentroid Position [m]')
-
-        plt.show()
-
-    def drawMaterialMassDistribution(self):
-        plt.title("Material Mass Distribution")
-        plt.plot(self.crossectionYLocations, self.getMassDistributionLst())
-        plt.xlabel('semi-span [m]')
-        plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
-
-        plt.show()
-
-    def drawFuelMassDistribution(self):
-        plt.title("Fuel Mass Distribution")
-        plt.plot(self.crossectionYLocations, self.getFuelMassDistributionLst())
-
-        plt.xlabel('semi-span [m]')
-        plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
-
-        plt.show()
-
-    def chordAtY(self, y):
+    def getChordAtY(self, y):
         return self.rootchord * (1 + ((2 * (self.taperratio - 1)) / self.span) * y)
 
     def leadingEdgeXPos(self, posY):
-        return self.rootchord/2 - self.chordAtY(posY)/2
+        return self.rootchord / 2 - self.getChordAtY(posY) / 2
 
     def getVerticalDeflectionFunction(self, fidelity=integrationFidelity, limit=integrationLimit):
         if self.mxFunc is None:
@@ -455,16 +355,114 @@ class Wingbox:
 
         for crosssection in self.crosssecctions:
             stress = crosssection.getMaxShearStress(self.shearzx(crosssection.yLocation), self.myFunc(yLoc))
-            if(stress < 0):
-                print("ALARM, ALARM")
-                print("ALARM, ALARM")
-                print("ALARM, ALARM")
-                print("ALARM, ALARM")
             if stress > max:
                 max = stress
                 yLoc = crosssection.yLocation
 
         return max, yLoc
+
+    def draw(self, top=True):
+        plt.clf()
+
+        if top:
+            plt.title("Top View")
+        else:
+            plt.title("Bottom View")
+
+        #Planform
+        rotatedPlanform = self.planformPolygon.getRotatedPolygon(np.deg2rad(90))
+        rotatedPlanform = rotatedPlanform.getTranslatedPolygon([-rotatedPlanform.coords[1][i] for i in range(2)])
+        rotatedPlanform.addToPlot(plt, color="red")
+
+        #draw ribs
+        for ribline in self.ribLines:
+            plt.plot(ribline[1], ribline[0], color="black")
+
+        #draw spars
+        for sparLine in self.sparLines:
+            plt.plot(sparLine[1], sparLine[0], color="blue")
+
+        #draw stringers
+        if top:
+            a = enumerate(reversed(self.stringerLines))
+            color = ["pink", "green"]
+        else:
+            a = enumerate(self.stringerLines)
+            color = ["green", "pink"]
+
+        for index, stringerLineList in a:
+            for stringer in stringerLineList:
+                plt.plot(stringer[1], stringer[0], color=color[index])
+
+        # x, y ranges and same scale
+        plt.ylim(-0.05*self.rootchord, 1.05 * self.rootchord)
+        plt.xlim(-0.05 * self.semispan, 1.05 * self.semispan)
+        plt.gca().set_aspect('equal', adjustable='box')
+
+        plt.show()
+
+    def drawInertias(self):
+        inertiaNames = [r"$I_{xx}$", r"$I_{zz}$", r"$I_{xz}$", "$J$"]
+        fig, plots = plt.subplots(2, 2)
+        fig.suptitle('Inertias')
+        for row in range(2):
+            for col in range(2):
+                plots[row, col].plot(self.ixxList[0], [self.inertiaFunctionsY[row * 2 + col](i) for i in self.ixxList[0]])
+                plots[row, col].set_title(inertiaNames[row * 2 + col])
+                plots[row, col].set(ylabel=r'Inertia [$m^4$]', xlabel='semi-span [m]')
+        fig.tight_layout(pad=1.5)
+
+        plt.show()
+
+    def drawDeflection(self, verticalDeflectionFunction, axisSameScale=False):
+        plt.title("Vertical Deflection")
+        plt.plot(self.ixxList[0], [verticalDeflectionFunction(i) for i in self.ixxList[0]])
+        plt.xlabel('semi-span [m]')
+        plt.ylabel('deflection [m]')
+
+        if axisSameScale:
+            plt.gca().set_aspect('equal', adjustable='box')
+
+        plt.show()
+
+    def drawTwist(self, twistDeflectionFunction, degrees=False):
+        plt.title("Twist")
+        if degrees:
+            plt.plot(self.ixxList[0], [np.rad2deg(twistDeflectionFunction(i)) for i in self.ixxList[0]])
+        else:
+            plt.plot(self.ixxList[0], [twistDeflectionFunction(i) for i in self.ixxList[0]])
+        plt.xlabel('semi-span [m]')
+        if degrees:
+            plt.ylabel('twist [deg]')
+        else:
+            plt.ylabel('twist [rad]')
+
+        plt.show()
+
+    def drawCentroidXatY(self):
+        plt.title("Centroid X Position at Y")
+        plt.plot(self.crossectionYLocations, [self.centroidDistFromC4AtYFunc(i) for i in self.crossectionYLocations])
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'x ccentroid Position [m]')
+
+        plt.show()
+
+    def drawMaterialMassDistribution(self):
+        plt.title("Material Mass Distribution")
+        plt.plot(self.crossectionYLocations, self.getMassDistributionLst())
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
+
+        plt.show()
+
+    def drawFuelMassDistribution(self):
+        plt.title("Fuel Mass Distribution")
+        plt.plot(self.crossectionYLocations, self.getFuelMassDistributionLst())
+
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
+
+        plt.show()
 
 
 

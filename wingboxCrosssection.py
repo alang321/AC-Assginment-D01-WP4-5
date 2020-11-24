@@ -108,8 +108,8 @@ class WingboxCrossection:
     def __getInnerCornerCoordinates(self, outerCornerCoordinates, centerLine=False):
         coordinateList = []
 
-        topFlangAngle = WingboxCrossection.getAngleLineHorizontal(outerCornerCoordinates[0], outerCornerCoordinates[3])
-        bottomFlangeAngle = WingboxCrossection.getAngleLineHorizontal(outerCornerCoordinates[1], outerCornerCoordinates[2])
+        topFlangAngle = self.__getAngleLineHorizontal(outerCornerCoordinates[0], outerCornerCoordinates[3])
+        bottomFlangeAngle = self.__getAngleLineHorizontal(outerCornerCoordinates[1], outerCornerCoordinates[2])
         flangeAngles = [topFlangAngle, bottomFlangeAngle]
         flangeVertPosForwardSpar = [outerCornerCoordinates[0][1], outerCornerCoordinates[1][1]]
 
@@ -234,7 +234,7 @@ class WingboxCrossection:
 
             for pointIndex in range(4):
                 nextPointIndex = (pointIndex + 1) % 4
-                lengthEachSide.append(self.getDistanceBetweenPoints(self.centerLinePolygons[sectionIndex].coords[pointIndex],self.centerLinePolygons[sectionIndex].coords[nextPointIndex])) #length of side
+                lengthEachSide.append(self.__getDistanceBetweenPoints(self.centerLinePolygons[sectionIndex].coords[pointIndex], self.centerLinePolygons[sectionIndex].coords[nextPointIndex])) #length of side
 
             #add all side terms with g and thickness for shear flow coefficient of current section
             sum = 0
@@ -272,7 +272,7 @@ class WingboxCrossection:
             for stringer in self.stringers[side]:
                 xList.append(stringer[0])
 
-            zList = WingboxCrossection.getZfromXLine(attachmentLine[side][0], attachmentLine[side][1], xList)
+            zList = self.__getZfromXLine(attachmentLine[side][0], attachmentLine[side][1], xList)
 
             for index, stringer in enumerate(self.stringers[side]):
                 stringers.append(stringer[1].getStringerPolygonAtPointAndLine([xList[index], zList[index]], [attachmentLine[side][0], attachmentLine[side][1]]))
@@ -328,6 +328,32 @@ class WingboxCrossection:
     def getBendingStressAtPoint(self, Mx, Mz, x, z):
         return ((self.ixx * Mz - self.izx * Mx)/(self.ixx * self.izz - self.izx**2))*x + ((self.izz * Mx - self.izx * Mz)/(self.ixx * self.izz - self.izx**2))*z
 
+    #return the intersection of both the upper surface and the lower surface at specified location
+    def __intersection(self, location):
+        f_upper = interp1d(self.airfoilData[0][0], self.airfoilData[0][1])
+        f_lower = interp1d(self.airfoilData[1][0], self.airfoilData[1][1])
+
+        return float(f_upper(location)), float(f_lower(location))
+
+    #calculate the angle between a line defined by 2 coordinates and the x axis
+    def __getAngleLineHorizontal(coord1, coord2):
+        if coord2[0] == coord1[0]:
+            return np.pi/2
+        return np.arctan((coord2[1]-coord1[1])/(coord2[0]-coord1[0]))
+
+    def __getDistanceBetweenPoints(coord1, coord2):
+        return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
+
+    def __getZfromXLine(coord1, coord2, xList):
+        k = (coord1[1]-coord2[1])/(coord1[0]-coord2[0])
+        d = coord1[1] - k * coord1[0]
+
+        zList = []
+        for x in xList:
+            zList.append(k*x+d)
+
+        return zList
+
     def addBendingStressHeatMapPlot(self, Mx, Mz, points=200, ultimateScale=False, yieldScale=False):
         xVals = []
         zVals = []
@@ -347,7 +373,7 @@ class WingboxCrossection:
             #along top lines with certain x values
             xtemp = np.linspace(self.sparAbsoluteLocations[0], self.sparAbsoluteLocations[-1], points)
             xVals.extend(xtemp)
-            zVals.extend(self.getZfromXLine(line[0], line[1], xtemp))
+            zVals.extend(self.__getZfromXLine(line[0], line[1], xtemp))
 
         for line in verticalLines:
             #along side lines with certain z values
@@ -412,31 +438,3 @@ class WingboxCrossection:
         plt.gca().set_aspect('equal', adjustable='box')
 
         plt.show()
-
-    #return the intersection of both the upper surface and the lower surface at specified location
-    def __intersection(self, location):
-        f_upper = interp1d(self.airfoilData[0][0], self.airfoilData[0][1])
-        f_lower = interp1d(self.airfoilData[1][0], self.airfoilData[1][1])
-
-        return float(f_upper(location)), float(f_lower(location))
-
-    @staticmethod #calculate the angle between a line defined by 2 coordinates and the x axis
-    def getAngleLineHorizontal(coord1, coord2):
-        if coord2[0] == coord1[0]:
-            return np.pi/2
-        return np.arctan((coord2[1]-coord1[1])/(coord2[0]-coord1[0]))
-
-    @staticmethod
-    def getDistanceBetweenPoints(coord1, coord2):
-        return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
-
-    @staticmethod
-    def getZfromXLine(coord1, coord2, xList):
-        k = (coord1[1]-coord2[1])/(coord1[0]-coord2[0])
-        d = coord1[1] - k * coord1[0]
-
-        zList = []
-        for x in xList:
-            zList.append(k*x+d)
-
-        return zList
