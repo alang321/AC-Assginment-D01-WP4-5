@@ -86,7 +86,6 @@ class Wingbox:
 
         #just for drawing the inertias
         self.inertiaFunctionsY = [self.ixxFuncY, self.izzFuncY, self.ixzFuncY, self.jFuncY]
-        self.inertiaNames = ["Ixx", "Izz", "Ixz", "J"]
 
         #mat properties
         # shear modulus": 26 * 10**9,
@@ -282,12 +281,13 @@ class Wingbox:
         plt.show()
 
     def drawInertias(self):
+        inertiaNames = [r"$I_{xx}$", r"$I_{zz}$", r"$I_{xz}$", "$J$"]
         fig, plots = plt.subplots(2, 2)
         fig.suptitle('Inertias')
         for row in range(2):
             for col in range(2):
                 plots[row, col].plot(self.ixxList[0], [self.inertiaFunctionsY[row * 2 + col](i) for i in self.ixxList[0]])
-                plots[row, col].set_title(self.inertiaNames[row * 2 + col])
+                plots[row, col].set_title(inertiaNames[row * 2 + col])
                 plots[row, col].set(ylabel=r'Inertia [$m^4$]', xlabel='semi-span [m]')
         fig.tight_layout(pad=1.5)
 

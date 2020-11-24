@@ -15,7 +15,7 @@ h = AircraftProperties.Cruise_constants["cruise altitude"]
 rho = AircraftProperties.Cruise_constants["density at cruise"]
 S = 362.73
 cL = 1866756/((1/2) * rho * v**2 * S)
-forces = AerodynamicLoading.getLiftDragMoment(cL, 0.375, v, h)
+forces = AerodynamicLoading.getNormalTangentialMomentAOA(cL, 0.375, v, h)
 print(np.rad2deg(forces[3]))
 
 AerodynamicLoading.drawAerodynamicCoefficients()

@@ -48,7 +48,7 @@ coefficientFunctions = [[Cl0Func, Cl10Func],
 aerodynamicCoefficientsDrawing = [[Cl0Func, "Lift coefficient at 0 deg"], [Cl10Func, "Lift coefficient at 10 deg"], [Cd0Func, "Drag coefficient at 0 deg"], [Cd10Func, "Drag coefficient at 10 deg"], [Cm0Func, "Moment around c/4 0 deg"], [Cm10Func, "Moment around c/4 10 deg"]]
 
 
-def getLiftDragMoment(cLd, xovercCentroid, v, altitude):
+def getNormalTangentialMomentAOA(cLd, xovercCentroid, v, altitude):
     temp, p, rho = getISAParameters(altitude)
     machNumber = v/(1.4*287.05*temp)**0.5
     q = 1 / 2 * rho * (v**2)
@@ -73,7 +73,7 @@ def getLiftDragMoment(cLd, xovercCentroid, v, altitude):
     cmx = lambda y: cm(y) + (xovercCentroid - 0.25) * clFreestream(y)
 
     liftFreestream = lambda y: clFreestream(y) * q * Chord(y)
-    dragFreestream = lambda y: -cdFreestream(y) * q * Chord(y)
+    dragFreestream = lambda y: cdFreestream(y) * q * Chord(y)
 
     Moment = lambda y: cmx(y) * q * Chord(y)
 
@@ -154,7 +154,7 @@ def getISAParameters(h):
 def drawAerodynamicCoefficients(fidelity=50):
     a = np.linspace(0, AircraftProperties.Planform["span"]/2, fidelity)
     fig, plots = plt.subplots(3, 2)
-    fig.suptitle('Aerodynamic Coefficients')
+    fig.suptitle('Aerodynamic Coefficients\n', fontsize=16)
     for row in range(3):
         for col in range(2):
             plots[row, col].plot(a, [aerodynamicCoefficientsDrawing[row * 2 + col][0](i) for i in a])
@@ -166,10 +166,10 @@ def drawAerodynamicCoefficients(fidelity=50):
 
 def drawAerodynamicForces(aerodynamicForces, fidelity=50):
     a = np.linspace(0, AircraftProperties.Planform["span"]/2, fidelity)
-    plotNames = ["Lift", "Drag", "Moment at x/c"]
+    plotNames = ["Normal", "Tangential", "Moment at x/c"]
     plotUnits = ["N", "N", "Nm"]
     fig, plots = plt.subplots(3)
-    fig.suptitle('Aerodynamic Forces')
+    fig.suptitle('Aerodynamic Forces\n', fontsize=16)
     for row in range(3):
         plots[row].plot(a, [aerodynamicForces[row](i) for i in a])
         plots[row].set_title(plotNames[row])
