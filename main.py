@@ -2,7 +2,7 @@ from aircraftProperties import AircraftProperties
 from wingboxCrosssection import WingboxCrossection
 from Polygon import StringerType
 from wingbox import Wingbox
-import test
+import AerodynamicLoading
 import numpy as np
 from distributedLoad import distributedLoad
 
@@ -10,14 +10,16 @@ from distributedLoad import distributedLoad
 
 #aerodynamicLoadingDistribution.drawAerodynamicCoefficients()
 
-v = 232
-rho = 1.225
+v = 232.412
+h = AircraftProperties.Cruise_constants["cruise altitude"]
+rho = AircraftProperties.Cruise_constants["density at cruise"]
 S = 362.73
 cL = 1866756/((1/2) * rho * v**2 * S)
-forces = test.getLiftDragMomentDistribution(cL, 0.375, v, rho)
+forces = AerodynamicLoading.getLiftDragMoment(cL, 0.375, v, h)
+print(np.rad2deg(forces[3]))
 
-test.drawAerodynamicCoefficients()
-test.drawAerodynamicForces(forces)
+AerodynamicLoading.drawAerodynamicCoefficients()
+AerodynamicLoading.drawAerodynamicForces(forces)
 
 
 #Add normal force
@@ -27,9 +29,9 @@ normalForce.addDistibutedLoad(forces[0])
 normalForce.addPointLoad(-AircraftProperties.Engine["weight"], 10, "Engine")
 
 normalForce.drawLoads(fidelity=100)
-normalForce.getShearForce(fidelity=20)
+normalForce.getShearForce(fidelity=60)
 normalForce.getMomentDistribution(fidelity=20)
-normalForce.drawShear()
+normalForce.drawShear(fidelity=100)
 
 #tangentialForce = distributedLoad([0, AircraftProperties.Planform["span"] / 2])
 #tangentialForce.addDistibutedLoad(forces[1])

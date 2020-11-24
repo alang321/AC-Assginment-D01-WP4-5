@@ -44,97 +44,94 @@ coefficientFunctions = [[Cl0Func, Cl10Func],
                         [Cd0Func, Cd10Func],
                         [Cm0Func, Cm10Func]]
 
-
-coefficient = [[CL_0, CL_10],
-            [Cd_0, Cd_10],
-            [Cm_0, Cm_10]]
+#for drawing
+aerodynamicCoefficientsDrawing = [[Cl0Func, "Lift coefficient at 0 deg"], [Cl10Func, "Lift coefficient at 10 deg"], [Cd0Func, "Drag coefficient at 0 deg"], [Cd10Func, "Drag coefficient at 10 deg"], [Cm0Func, "Moment around c/4 0 deg"], [Cm10Func, "Moment around c/4 10 deg"]]
 
 
-
-rho = 1.225
-V = 230
-q = 1 / 2 * rho * (V ** 2)
-Liftacclst = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Liftacclst.append(Cl0Func(i) * Chord(i) * q)
-Liftacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Liftacclst, kind='cubic', fill_value="extrapolate")
-Dragacclst = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Dragacclst.append(Cd0Func(i) * Chord(i) * q)
-Dragacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Dragacclst, kind='cubic', fill_value="extrapolate")
-Momentacclst = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Momentacclst.append(Cm0Func(i) * Chord(i) * q)
-Momentacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Momentacclst, kind='cubic', fill_value="extrapolate")
-
-# 10 degrees AoA
-Liftacc10lst = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Liftacc10lst.append(Cl10Func(i) * Chord(i) * q)
-Liftacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Liftacc10lst, kind='cubic', fill_value="extrapolate")
-Dragacc10lst = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Dragacc10lst.append(Cd10Func(i) * Chord(i) * q)
-Dragacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Dragacc10lst, kind='cubic', fill_value="extrapolate")
-Momentacc10lst = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Momentacc10lst.append(Cm10Func(i) * Chord(i) * q)
-Momentacc10 = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Momentacc10lst, kind='cubic',
-                                      fill_value="extrapolate")
-
-
-# Distribution at random AoA / Coeff
-CL_0 = 0.430299
-CL_10 = 1.252323
-
-
-CL_dList = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    CL_dList.append(Liftacc(i) + ((CL_d - CL_0) / (CL_10 - CL_0)) * (Liftacc10(i) - Liftacc(i)))
-CL_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), CL_dList, kind='cubic', fill_value="extrapolate")
-
-Cd_0 = 0.006490
-Cd_10 = 0.054091
-Cd_d = 0.02  # Desired distribution for this coefficcient
-Cd_dList = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Cd_dList.append(Dragacc(i) + ((Cd_d - Cd_0) / (Cd_10 - Cd_0)) * (Dragacc10(i) - Dragacc(i)))
-Cd_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Cd_dList, kind='cubic', fill_value="extrapolate")
-
-Cm_0 = -0.621253
-Cm_10 = -1.60557
-Cm_d = -1  # Desired distribution for this coefficcient
-Cm_dList = []
-for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-    Cm_dList.append(Momentacc(i) + ((Cm_d - Cm_0) / (Cm_10 - Cm_0)) * (Momentacc10(i) - Momentacc(i)))
-Cm_dacc = sp.interpolate.interp1d(np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1), Cm_dList, kind='cubic', fill_value="extrapolate")
-
-
-def getLiftDragMoment(cL, xoverc, v, altitude):
-    t, p, rho = getISAParameters(altitude)
+def getLiftDragMoment(cLd, xovercCentroid, v, altitude):
+    temp, p, rho = getISAParameters(altitude)
+    machNumber = v/(1.4*287.05*temp)**0.5
     q = 1 / 2 * rho * (v**2)
 
+    if machNumber > 0.2:
+        adjustedCoefficients = getCompressionAdjustedCoefficients(machNumber)
+    else:
+        adjustedCoefficients = [[CL_0, CL_10], [Cd_0, Cd_10], [Cm_0, Cm_10]]
 
-def getCoefficientatAOA(aoa, index):
-    return ((np.sin(aoa)*coefficient[index][1]-coefficient[index][0])/np.sin(np.deg2rad(10)))+coefficient[index][0]
+    print(adjustedCoefficients)
+
+    aoa = getAOAatCL(cLd, adjustedCoefficients)
+
+    CDd = getCoefficientatAOA(aoa, 1, adjustedCoefficients)
+    CMd = getCoefficientatAOA(aoa, 2, adjustedCoefficients)
+    print(cLd, CDd, CMd)
+
+    clFreestream = getCoefficientDistribution(cLd, 0, machNumber, adjustedCoefficients)
+    cdFreestream = getCoefficientDistribution(CDd, 1, machNumber, adjustedCoefficients)
+    cm = getCoefficientDistribution(CMd, 2, machNumber, adjustedCoefficients)
+    # for shit of moment equation see first line of https://brightspace.tudelft.nl/d2l/le/content/292972/viewContent/1906402/View
+    cmx = lambda y: cm(y) + (xovercCentroid - 0.25) * clFreestream(y)
+
+    liftFreestream = lambda y: clFreestream(y) * q * Chord(y)
+    dragFreestream = lambda y: -cdFreestream(y) * q * Chord(y)
+
+    Moment = lambda y: cmx(y) * q * Chord(y)
+
+    Lift = lambda y: np.cos(aoa) * liftFreestream(y) + np.sin(aoa) * dragFreestream(y)
+    Drag = lambda y: -liftFreestream(y) * np.sin(aoa) + np.cos(aoa) * dragFreestream(y)
+
+    return Lift, Drag, Moment, aoa
+
+def getCoefficientDistribution(desiredCoefficient, index, machNumber, adjustedCoefficients):
+    coeff0 = adjustedCoefficients[index][0]
+    coeff10 = adjustedCoefficients[index][1]
+    func0 = coefficientFunctions[index][0]
+    func10 = coefficientFunctions[index][1]
+
+    if machNumber > 0.2:
+        return lambda y: (func0(y) + ((desiredCoefficient - coeff0) / (coeff10 - coeff0)) * (func10(y) - func0(y))) * (1 / getBeta(machNumber))
+    else:
+        return lambda y: (func0(y) + ((desiredCoefficient - coeff0) / (coeff10 - coeff0)) * (func10(y) - func0(y)))
 
 
-def getBeta(machNumber):
-    return (1-machNumber**2)**0.5
-
-
-def getMachNumber(v, temp):
-    return v/(1.4*287.05*temp)**0.5
-
-
-def getClAlpha():
-    return
+def getCoefficientatAOA(aoa, index, adjustedCoefficients):
+    print(adjustedCoefficients[index], aoa)
+    return ((np.sin(aoa)*(adjustedCoefficients[index][1]-adjustedCoefficients[index][0]))/np.sin(np.deg2rad(10)))+adjustedCoefficients[index][0]
 
 
 # calculation AoA
-def getAOAatCL(CL_d):
-    AoAL = math.degrees(math.asin(((CL_d - CL_0) / (CL_10 - CL_0)) * math.sin(math.radians(10))))
-    return AoAL
+def getAOAatCL(CL_d, adjustedCoefficients):
+    return np.arcsin(((CL_d - adjustedCoefficients[0][0]) / (adjustedCoefficients[0][1] - adjustedCoefficients[0][0])) * np.sin(np.deg2rad(10)))
+
+
+def getBeta(machNumber):
+    return (abs(1-machNumber**2))**0.5
+
+
+def getCompressionAdjustedCoefficients(machNumber):
+    cd0 = AircraftProperties.Planform["cd0 wing"]
+    zeroliftAOA = np.deg2rad(AircraftProperties.Airfoil["zero lift aoa"])
+    e = AircraftProperties.Planform["e"]
+    A = AircraftProperties.Planform["aspect ratio"]
+
+    beta = getBeta(machNumber)
+    eff = 0.95
+    sweep = np.deg2rad(AircraftProperties.Planform["half-chord sweep"])
+
+    clalpha = (2 * np.pi * A) / (2 + np.sqrt(4 + (((A * beta) ** 2) / eff) * (1 + ((np.tan(sweep) ** 2) / (beta ** 2)))))
+
+    d = clalpha * -zeroliftAOA
+
+    CL0adjusted = d
+    CL10adjusted = clalpha * np.deg2rad(10) + d
+
+    Cm0adjusted = Cm_0 * (CL0adjusted/CL_0)
+    Cm10adjusted = Cm_10 * (CL10adjusted/CL_10)
+
+    Cd0adjusted = cd0 + (CL0adjusted**2)/(np.pi * A * e)
+    Cd10adjusted = cd0 + (CL10adjusted**2)/(np.pi * A * e)
+
+    return [[CL0adjusted, CL10adjusted], [Cd0adjusted, Cd10adjusted], [Cm0adjusted, Cm10adjusted]]
 
 
 def getISAParameters(h):
@@ -154,55 +151,29 @@ def getISAParameters(h):
 # print(AoAD)
 # print(AoAM)
 
-def drawgraphs():
-    plt.subplot(221)
-    X = []
-    Y0 = []
-    Y10 = []
-    Yd = []
-    for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-        X.append(i)
-        Y0.append(Liftacc(i))
-        Y10.append(Liftacc10(i))
-        Yd.append(CL_dacc(i))
-    plt.plot(X, Y0, color="red")
-    plt.plot(X, Y10, color="blue")
-    plt.plot(X, Yd, color="green")
-    plt.ylabel("Lift")
-
-    plt.subplot(222)
-    X = []
-    Y0 = []
-    Y10 = []
-    Yd = []
-    for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-        X.append(i)
-        Y0.append(Dragacc(i))
-        Y10.append(Dragacc10(i))
-        Yd.append(Cd_dacc(i))
-    plt.plot(X, Y0, color="red")
-    plt.plot(X, Y10, color="blue")
-    plt.plot(X, Yd, color="green")
-    plt.xlabel("Span Position")
-    plt.ylabel("Drag")
-
-    plt.subplot(223)
-    X = []
-    Y0 = []
-    Y10 = []
-    Yd = []
-    for i in np.arange(0, AircraftProperties.Planform["span"] / 2, 0.1):
-        X.append(i)
-        Y0.append(Momentacc(i))
-        Y10.append(Momentacc10(i))
-        Yd.append(Cm_dacc(i))
-    plt.plot(X, Y0, color="red")
-    plt.plot(X, Y10, color="blue")
-    plt.plot(X, Yd, color="green")
-    plt.xlabel("Span Position")
-    plt.ylabel("Moment")
+def drawAerodynamicCoefficients(fidelity=50):
+    a = np.linspace(0, AircraftProperties.Planform["span"]/2, fidelity)
+    fig, plots = plt.subplots(3, 2)
+    fig.suptitle('Aerodynamic Coefficients')
+    for row in range(3):
+        for col in range(2):
+            plots[row, col].plot(a, [aerodynamicCoefficientsDrawing[row * 2 + col][0](i) for i in a])
+            plots[row, col].set_title(aerodynamicCoefficientsDrawing[row * 2 + col][1])
+            plots[row, col].set(xlabel='semi-span [m]')
+    fig.tight_layout(pad=0.2)
 
     plt.show()
 
+def drawAerodynamicForces(aerodynamicForces, fidelity=50):
+    a = np.linspace(0, AircraftProperties.Planform["span"]/2, fidelity)
+    plotNames = ["Lift", "Drag", "Moment at x/c"]
+    plotUnits = ["N", "N", "Nm"]
+    fig, plots = plt.subplots(3)
+    fig.suptitle('Aerodynamic Forces')
+    for row in range(3):
+        plots[row].plot(a, [aerodynamicForces[row](i) for i in a])
+        plots[row].set_title(plotNames[row])
+        plots[row].set(xlabel='semi-span [m]', ylabel=plotUnits[row])
+    fig.tight_layout(pad=0.2)
 
-drawgraphs()
+    plt.show()

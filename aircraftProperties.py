@@ -26,12 +26,13 @@ class AircraftProperties:
         "dihedral": 2.123,  # $deg$
         "forward spar fraction of chord": 0.15,  # -
         "aft spar fraction of chord": 0.6,  # -
-        "cd0 wing": 0.00317965138
+        "cd0 wing": 0.00317965138,
+        "e": 0.625
     }
     Airfoil = {
         "t/c": 14.22,  # $\%$
         "airfoil identifier": "NASA20714",  # -
-        "zero lift aoa": -4.7 #deg
+        "zero lift aoa": -4.75 #deg
     }
     Aileron = {
         "span fract of wingspan": 0.28,  # -

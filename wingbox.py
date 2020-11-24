@@ -12,7 +12,7 @@ class Wingbox:
     __density = AircraftProperties.WingboxMaterial["density"]
     __shear = AircraftProperties.WingboxMaterial["shear strength"]
 
-    integrationLimit = 200
+    integrationLimit = 50
     integrationFidelity = 20
 
     #spar flange connection stringer should be the name basically with the orientation such aconnection stringer would have in the top right

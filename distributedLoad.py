@@ -7,7 +7,7 @@ from scipy.interpolate import interp1d
 class distributedLoad:
     semispan = AircraftProperties.Planform["span"]/2
 
-    integrationLimit = 200
+    integrationLimit = 50
     integrationFidelity = 20
 
     def __init__(self, limits):
