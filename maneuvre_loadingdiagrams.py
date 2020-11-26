@@ -300,7 +300,7 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
 
 
     
-    plt.xticks(np.arange(0, 400, 50))  #fixing the x axis 
+    plt.xticks(np.arange(0, 350, 50))  #fixing the x axis 
     plt.ylim(-1.5, 3)
     plt.xlim(0,350)
     
@@ -322,17 +322,15 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.plot(x1, f(x1), 'black')  # (0,0) to V_A curve
     plt.plot(x2, y2, 'black')  #flaps down curve
     plt.plot(x3, -f(x3), 'black')
-<<<<<<< HEAD
-    plt.axvline(x=V_A, color = 'black', linestyle = '--')
-    plt.vlines(x=V_S0, color = 'black', linestyle = '--')
+    
  
-=======
 
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=0.5)
->>>>>>> 283c6d273e88ad4577e54e473154720d8104d981
+
     return plt.show()
 
 plt.figure()
+    
 for i in range(len(V_all_list_sorted)):
 
     V_A = V_all_list_sorted[i][0]
