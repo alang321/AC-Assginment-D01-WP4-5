@@ -37,6 +37,7 @@ C_L_max = AircraftProperties.Lift["CL max without flaps"]
 C_MAC = AircraftProperties.Planform["MAC"]
 
 
+
 #maximimum load factors
 n_max = 2.5
 n_min = -1.0
