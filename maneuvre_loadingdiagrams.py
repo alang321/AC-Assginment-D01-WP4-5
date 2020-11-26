@@ -297,7 +297,7 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.plot(x2, y2, 'black')  #flaps down curve
     plt.plot(x3, -f(x3), 'black')
     plt.axvline(x=V_A, color = 'black', linestyle = '--')
-    plt.axvline(x=V_S0, color = 'black', linestyle = '--')
+    plt.vlines(x=V_S0, color = 'black', linestyle = '--')
  
     return plt.show()
 
