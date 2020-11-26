@@ -74,7 +74,7 @@ class WingboxCrossection:
         self.negativeCentroidContributions.extend(self.insidePolygons)
 
         #calculate total enclosed area and crossectional area
-        self.totalCrossectionalArea = self.__getTotalCrosssectionalArea()
+        self.materialArea = self.__getMaterialArea()
         self.enclosedArea = self.__getEnclosedArea()
         self.internalArea = self.__getInternalArea()
 
@@ -161,7 +161,7 @@ class WingboxCrossection:
                 centroid[axis] -= polygonCentroid[axis] * polygon.getArea()
 
         for axis in range(2):
-            centroid[axis] /= self.totalCrossectionalArea
+            centroid[axis] /= self.materialArea
 
         return centroid
 
@@ -290,9 +290,11 @@ class WingboxCrossection:
         sum = 0
         for i in self.insidePolygons:
             sum += i.getArea()
+        for i in self.stringerPolygons:
+            sum -= i.getArea()
         return sum
 
-    def __getTotalCrosssectionalArea(self):
+    def __getMaterialArea(self):
         totalArea = 0
 
         for polygonPositive in self.positiveCentroidContributions:
@@ -322,11 +324,23 @@ class WingboxCrossection:
         taoShear = (V*Q)/(self.ixx*self.sparThicknesses[0])
 
         qs = self.__getMulticellTorsion(My)
-        taoTorque = abs(qs[0]/self.sparThicknesses[0])
+
+        index = 0
+        #if shear is negative take leftmost
+        if My < 0:
+            index = 0
+        else:
+            index = -2
+        #if shear is positive take right side
+
+        taoTorque = abs(qs[index]/self.sparThicknesses[0])
         return taoTorque + taoShear
 
     def getBendingStressAtPoint(self, Mx, Mz, x, z):
         return ((self.ixx * Mz - self.izx * Mx)/(self.ixx * self.izz - self.izx**2))*x + ((self.izz * Mx - self.izx * Mz)/(self.ixx * self.izz - self.izx**2))*z
+
+    def getNormalStressAtPoint(self, Mx, Mz, x, z, normalForce):
+        return self.getBendingStressAtPoint(Mx, Mz, x, z) + normalForce/self.materialArea
 
     #return the intersection of both the upper surface and the lower surface at specified location
     def __intersection(self, location):
@@ -336,15 +350,15 @@ class WingboxCrossection:
         return float(f_upper(location)), float(f_lower(location))
 
     #calculate the angle between a line defined by 2 coordinates and the x axis
-    def __getAngleLineHorizontal(coord1, coord2):
+    def __getAngleLineHorizontal(self, coord1, coord2):
         if coord2[0] == coord1[0]:
             return np.pi/2
         return np.arctan((coord2[1]-coord1[1])/(coord2[0]-coord1[0]))
 
-    def __getDistanceBetweenPoints(coord1, coord2):
+    def __getDistanceBetweenPoints(self, coord1, coord2):
         return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
 
-    def __getZfromXLine(coord1, coord2, xList):
+    def __getZfromXLine(self, coord1, coord2, xList):
         k = (coord1[1]-coord2[1])/(coord1[0]-coord2[0])
         d = coord1[1] - k * coord1[0]
 
@@ -354,7 +368,7 @@ class WingboxCrossection:
 
         return zList
 
-    def addBendingStressHeatMapPlot(self, Mx, Mz, points=200, ultimateScale=False, yieldScale=False):
+    def addNormalStressHeatMapPlot(self, Mx, Mz, normalForce, points=200, ultimateScale=False, yieldScale=False):
         xVals = []
         zVals = []
         intensity = []
@@ -382,7 +396,7 @@ class WingboxCrossection:
                 xVals.append(line[0][0])
 
         for index in range(len(xVals)):
-            intensity.append(self.getBendingStressAtPoint(Mx, Mz, xVals[index], zVals[index]))
+            intensity.append((self.getNormalStressAtPoint(Mx, Mz, xVals[index], zVals[index], normalForce)))
 
         if ultimateScale:
             norm = plt.Normalize(vmin=-self.__ultimate, vmax=self.__ultimate)
@@ -395,18 +409,11 @@ class WingboxCrossection:
 
         plt.colorbar()
 
-    def drawBendingStressHeatmap(self, Mx, Mz, points=300, ultimateScale=False, yieldScale=False):
-        self.addBendingStressHeatMapPlot(Mx, Mz, points, ultimateScale, yieldScale)
-        plt.gca().set_aspect('equal', adjustable='box')
-
-        plt.show()
-
-    def drawCrosssection(self, drawSidewallCenterlines=False, drawCentroid=False, drawBendingStress=False, Mx=None, Mz=0):
+    def drawCrosssection(self, drawSidewallCenterlines=False, drawCentroid=False, drawnNormalStress=False, Mx=0, Mz=0, normalForce=0):
         plt.clf()
 
-        if drawBendingStress:
-            if Mx is not None:
-                self.addBendingStressHeatMapPlot(Mx, Mz, yieldScale=True)
+        if drawnNormalStress:
+            self.addNormalStressHeatMapPlot(Mx, Mz, normalForce, yieldScale=True)
 
         #plot top and bottom line
         plt.plot([i*self.chordLength for i in self.airfoilData[0][0]], [i*self.chordLength for i in self.airfoilData[0][1]], color="blue")

@@ -14,7 +14,7 @@ class WingLoads:
         "z": 2,
     }
     __externalForcesNames = [r"External Forces x", r"External Forces y", r"External Forces z"]
-    __externalMomentNames = [r"External Moments x", r"Torque", r"External Moments z"]
+    __externalMomentNames = [r"External Moments x", r"External Torque", r"External Moments z"]
     __internalMomentNames = [r"$M_x$", r"Torque", r"$M_z$"]
     __internalForceNames = [r"$V_x$", r"Invalid", r"$V_z$"]
 
@@ -40,7 +40,7 @@ class WingLoads:
         self.perAxisPointForces = self.decomposePointLoads(self.pointForces)
         self.perAxisPointMoments = self.getPointMoments(self.pointForces)
 
-        self.normalForce = None
+        self.__normalForce = None
         self.__internalShear = [None, lambda y: 0, None] # transverse shear at y axis is 0
         self.__internalMoments = [None, None, None]
 
@@ -67,8 +67,8 @@ class WingLoads:
         return moments
 
     def getNormalForce(self, fidelity=integrationFidelity, limit=integrationLimit):
-        if self.normalForce is not None:
-            return self.normalForce
+        if self.__normalForce is not None:
+            return self.__normalForce
 
         yList = np.linspace(self.limits[0], self.limits[1], fidelity, endpoint=True)
 
@@ -82,9 +82,9 @@ class WingLoads:
                     normalAtPoint += force[0]
             normalForce.append(normalAtPoint)
 
-        normalFunc = interp1d(yList, normalForce)
+        normalFunc = interp1d(yList, normalForce, kind='cubic')
 
-        self.normalForce = normalFunc
+        self.__normalForce = normalFunc
         return normalFunc
 
     def getShearForce(self, axis, fidelity=integrationFidelity, limit=integrationLimit):
@@ -112,8 +112,10 @@ class WingLoads:
         if self.__internalMoments[axis] is not None:
             return self.__internalMoments[axis]
 
-        if self.__internalShear[axis] is None:
-            self.getShearForce(axis)
+        bendingAxis = [2, 1, 0]
+
+        if self.__internalShear[bendingAxis[axis]] is None:
+            self.getShearForce(bendingAxis[axis])
 
         yList = np.linspace(self.limits[0], self.limits[1], fidelity, endpoint=True)
 
@@ -121,7 +123,7 @@ class WingLoads:
 
         for yVal in yList:
             # contribtuion from shear force
-            i = quad(self.__internalShear[axis], yVal, self.limits[1], limit=limit)
+            i = quad(self.__internalShear[bendingAxis[axis]], yVal, self.limits[1], limit=limit)
             momentAtPoint = -i[0]
             # contribution from distributed moment
             j = quad(self.distributedMoments[axis], yVal, self.limits[1], limit=limit)
@@ -134,7 +136,7 @@ class WingLoads:
 
             internalMoment.append(momentAtPoint)
 
-        momentFunc = interp1d(yList, internalMoment)
+        momentFunc = interp1d(yList, internalMoment, kind='cubic')
 
         self.__internalMoments[axis] = momentFunc
         return momentFunc
@@ -272,6 +274,8 @@ class PointForce:
 
         plot.plot([-2.5, -2.5, 2.5, 2.5, -2.5], [0, 29, 29, 0, 0], [0, 0, 0, 0, 0])# draw rough planform
         plot.quiver(-2.5, 14.5, 0, -5, 0, 0, color="blue")
+
+        plot.set_title(self.identifier)
 
         plot.set_xlim(-15, 15)
         plot.set_ylim(-0.5, 30)

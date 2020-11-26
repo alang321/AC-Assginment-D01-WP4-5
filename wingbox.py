@@ -4,6 +4,7 @@ from Polygon import Polygon
 from wingboxCrosssection import WingboxCrossection
 from scipy.interpolate import interp1d
 from scipy.integrate import quad
+from WingLoads import WingLoads
 import numpy as np
 
 class Wingbox:
@@ -18,8 +19,7 @@ class Wingbox:
     #spar flange connection stringer should be the name basically with the orientation such aconnection stringer would have in the top right
     #stringers should be alist of lists = [[absstarty, absendy, relposx, stringerShape], [......], ...]
     #flange thickness should be list = [[[topt, bott], endposY], [[topt, bott]], endposY], .....], so first index starts at wingroot
-    # spar thickness list = [[[spar1t, spar2 t, ..], endposY], [....], ...]
-    def __init__(self, ribLocations, spars, stringersTop, stringersBottom, sparFlangeConnectionStringerShape, flangeThicknesses, crosssectionAmount):
+    def __init__(self, ribLocations, spars, stringersTop, stringersBottom, sparFlangeConnectionStringerShape, flangeThicknesses, crosssectionAmount, wingLoading=WingLoads([], [None, None, None], [None, None, None])):
         self.span = AircraftProperties.Planform["span"]
         self.semispan = self.span/2
         self.taperratio = AircraftProperties.Planform["taper ratio"]
@@ -42,7 +42,7 @@ class Wingbox:
         for spar in self.spars:
             spar[1] = min(spar[1], self.semispan)
             xVals = [spar[2] * self.getChordAtY(spar[0]) + self.leadingEdgeXPos(spar[0]), spar[2] * self.getChordAtY(spar[1]) + self.leadingEdgeXPos(spar[1])]
-            yVals = [0, spar[1]]
+            yVals = [spar[0], spar[1]]
             self.sparLines.append([xVals, yVals])
 
         #stringers
@@ -74,7 +74,7 @@ class Wingbox:
         self.crosssectionAmount = crosssectionAmount
 
         self.crossectionYLocations = np.linspace(0, self.semispan, self.crosssectionAmount, endpoint=True)
-        self.crosssecctions = self.generateCrossections(self.crosssectionAmount)
+        self.crosssecctions = self.generateCrossections()
 
         #list = [yLocations, Inertia]
         self.ixxList, self.izzList, self.ixzList, self.jList = self.__generateInertialists()
@@ -97,13 +97,7 @@ class Wingbox:
 
         self.totalMass = self.materialVolume * self.__density
 
-        self.normalForces = lambda y: 0
-        self.internalShear = [lambda y: 0, lambda y: 0, lambda y: 0]
-        self.internalMoments = [lambda y: 0, lambda y: 0, lambda y: 0]
-        self.shearzx = lambda y: 0
-        self.myFunc = lambda y: 0
-        self.mxFunc = lambda y: 0
-        self.mzFunc = lambda y: 0
+        self.wingLoading = wingLoading
 
     def __getInternalAndMaterialVolume(self):
         internal = 0
@@ -112,23 +106,23 @@ class Wingbox:
 
         for crosssection in self.crosssecctions:
             internal += crosssection.internalArea
-            material += crosssection.totalCrossectionalArea
+            material += crosssection.materialArea
 
         internal *= ydist
         material *= ydist
 
         return internal, material
 
-    def getMassDistributionLst(self):
-        weight = []
-        ydist = self.crossectionYLocations[1]-self.crossectionYLocations[0]
+    def getStructuralMassDistribution(self):
+        structuralMass = []
 
         for crosssection in self.crosssecctions:
-            weight.append(crosssection.totalCrossectionalArea * self.__density)
+            structuralMass.append(crosssection.materialArea * self.__density)
 
-        return weight
+        return interp1d(self.crossectionYLocations, structuralMass)
 
-    def getFuelMassDistributionLst(self):
+    def getFuelMassDistribution(self):
+        #todo : fuel mass over whole wing
         fuelMass = []
         totalVolumeSoFar = 0
         ydist = self.crossectionYLocations[1]-self.crossectionYLocations[0] # assumes equal crosssection spacing
@@ -141,7 +135,7 @@ class Wingbox:
             else:
                 fuelMass.append(0)
 
-        return fuelMass
+        return interp1d(self.crossectionYLocations, fuelMass)
 
     def centroidDistFromC4AtY(self):
         return interp1d(self.crossectionYLocations, [i.centroid[0]-i.chordLength*0.25 for i in self.crosssecctions])
@@ -185,14 +179,14 @@ class Wingbox:
                 sides = [0]
 
             for side in sides:
-                startx = sparLine[0][0] + self.spars[index][3] * directions[side] * factor + stringerType.baseLength/2 * directions[side]
-                endx = sparLine[0][1] + self.spars[index][3] * directions[side] * factor + stringerType.baseLength/2 * directions[side]
+                startx = sparLine[0][0] + self.spars[index][3](sparLine[1][0]) * directions[side] * factor + stringerType.baseLength/2 * directions[side]
+                endx = sparLine[0][1] + self.spars[index][3](sparLine[1][1]) * directions[side] * factor + stringerType.baseLength/2 * directions[side]
 
                 stringersTop.append([sparLine[1][0], sparLine[1][1], startx, endx, stringerPerSide[side][0]])
                 stringersBottom.append([sparLine[1][0], sparLine[1][1], startx, endx, stringerPerSide[side][1]])
         return [stringersTop, stringersBottom]
 
-    def generateCrossections(self, crosssectionAmount):
+    def generateCrossections(self):
         crosssections = []
 
         for yPos in self.crossectionYLocations:
@@ -205,12 +199,7 @@ class Wingbox:
         return self.crosssecctions[i]
 
     def getCrosssectionAtY(self, posY):
-
-        flangeThicknesses = []
-        for i in self.flangeThicknesses:
-            if i[1] >= posY:
-                flangeThicknesses = i[0]
-                break
+        flangeThicknesses = [self.flangeThicknesses[0](posY), self.flangeThicknesses[1](posY)]
 
         stringers = [] #top, bottom
         for stringerLineList in self.stringerLines:
@@ -221,15 +210,13 @@ class Wingbox:
                     stringerPerSide.append([xPos - self.leadingEdgeXPos(posY), stringer[2]])
             stringers.append(stringerPerSide)
 
+        sparThicknesses = []
         spars = []
-        for spar in self.sparLines:
+        for index, spar in enumerate(self.sparLines):
             xPos = self.__getLineIntersection(spar[0], spar[1], posY)
             if xPos is not None:
                 spars.append(xPos - self.leadingEdgeXPos(posY))
-
-        sparThicknesses = []
-        for spar in self.spars:
-            sparThicknesses.append(spar[3])
+                sparThicknesses.append(self.spars[index][3](posY))
 
         return WingboxCrossection(chordLength=self.getChordAtY(posY), sparLocations=spars, sparThicknesses=sparThicknesses,
                                   flangeThicknesses=flangeThicknesses, stringersTop=stringers[0], stringersBottom=stringers[1], yLocation=posY)
@@ -250,10 +237,7 @@ class Wingbox:
         return self.rootchord / 2 - self.getChordAtY(posY) / 2
 
     def getVerticalDeflectionFunction(self, fidelity=integrationFidelity, limit=integrationLimit):
-        if self.mxFunc is None:
-            raise Exception("Moment around x function is not set yet")
-
-        MxAtYFunction = self.mxFunc
+        MxAtYFunction = self.wingLoading.getInternalMoment(0)
 
         dvoverdy = []
         v = []
@@ -264,19 +248,16 @@ class Wingbox:
             i = quad(f, 0, yVal, limit=limit)
             dvoverdy.append(i[0] * -1)
 
-        dvoverdyfunc = interp1d(yList, dvoverdy)
+        dvoverdyfunc = interp1d(yList, dvoverdy, kind='cubic')
 
         for yVal in np.linspace(0, self.semispan, fidelity):
             i = quad(dvoverdyfunc, 0, yVal, limit=limit)
             v.append(i[0])
 
-        return interp1d(yList, v)
+        return interp1d(yList, v, kind='cubic')
 
     def getVerticalDeflectionAtY(self, yPos, fidelity=integrationFidelity, limit=integrationLimit):
-        if self.mxFunc is None:
-            raise Exception("Moment around x function is not set yet")
-
-        MxAtYFunction = self.mxFunc
+        MxAtYFunction = self.wingLoading.getInternalMoment(0)
 
         dvoverdy = []
         yList = np.linspace(0, self.semispan, fidelity)
@@ -286,17 +267,14 @@ class Wingbox:
             i = quad(f, 0, yVal, limit=limit)
             dvoverdy.append(i[0] * -1)
 
-        dvoverdyfunc = interp1d(yList, dvoverdy)
+        dvoverdyfunc = interp1d(yList, dvoverdy, kind='cubic')
 
         i = quad(dvoverdyfunc, 0, yPos, limit=limit)
 
         return i[0]
 
     def getTwistFunction(self, fidelity=integrationFidelity, limit=integrationLimit):
-        if self.myFunc is None:
-            raise Exception("Moment around y function is not set yet")
-
-        MyAtYFunction = self.myFunc
+        MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
         dthetaoverdy = []
         theta = []
@@ -307,19 +285,16 @@ class Wingbox:
             i = quad(f, 0, yVal, limit=limit)
             dthetaoverdy.append(i[0] * -1)
 
-        dthethaoverdyfunc = interp1d(yList, dthetaoverdy)
+        dthethaoverdyfunc = interp1d(yList, dthetaoverdy, kind='cubic')
 
         for yVal in np.linspace(0, self.semispan, fidelity):
             i = quad(dthethaoverdyfunc, 0, yVal, limit=limit)
             theta.append(i[0])
 
-        return interp1d(yList, theta)
+        return interp1d(yList, theta, kind='cubic')
 
     def getTwist(self, MyAtYFunction, yPos, fidelity=integrationFidelity, limit=integrationLimit):
-        if self.myFunc is None:
-            raise Exception("Moment around y function is not set yet")
-
-        MyAtYFunction = self.myFunc
+        MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
         dthetaoverdy = []
         yList = np.linspace(0, self.semispan, fidelity)
@@ -329,7 +304,7 @@ class Wingbox:
             i = quad(f, 0, yVal, limit=limit)
             dthetaoverdy.append(i[0] * -1)
 
-        dthethaoverdyfunc = interp1d(yList, dthetaoverdy)
+        dthethaoverdyfunc = interp1d(yList, dthetaoverdy, kind='cubic')
 
         i = quad(dthethaoverdyfunc, 0, yPos, limit=limit)
 
@@ -341,7 +316,7 @@ class Wingbox:
 
         for crosssection in self.crosssecctions:
             for point in crosssection.outsidePolygon.coords:
-                stress = crosssection.getBendingStressAtPoint(self.mxFunc(crosssection.yLocation), self.mzFunc(crosssection.yLocation), point[0], point[1])
+                stress = crosssection.getBendingStressAtPoint(self.wingLoading.getInternalMoment(0)(crosssection.yLocation), self.wingLoading.getInternalMoment(2)(crosssection.yLocation), point[0], point[1])
                 if stress > max[0]:
                     max = [stress, crosssection, point]
                 elif stress < min[0]:
@@ -354,7 +329,7 @@ class Wingbox:
         yLoc = -1
 
         for crosssection in self.crosssecctions:
-            stress = crosssection.getMaxShearStress(self.shearzx(crosssection.yLocation), self.myFunc(yLoc))
+            stress = crosssection.getMaxShearStress(self.wingLoading.getShearForce(2)(crosssection.yLocation), self.wingLoading.getInternalMoment(1)(crosssection.yLocation))
             if stress > max:
                 max = stress
                 yLoc = crosssection.yLocation
@@ -400,6 +375,9 @@ class Wingbox:
         plt.gca().set_aspect('equal', adjustable='box')
 
         plt.show()
+
+    def drawCrosssection(self, posY, drawSidewallCenterlines=False, drawCentroid=False, drawNormalStress=False):
+        self.getGeneratedCrosssectionAtY(posY).drawCrosssection(drawSidewallCenterlines, drawCentroid, drawNormalStress, Mx=self.wingLoading.getInternalMoment(0)(posY), Mz=self.wingLoading.getInternalMoment(2)(posY), normalForce=self.wingLoading.getNormalForce()(posY))
 
     def drawInertias(self):
         inertiaNames = [r"$I_{xx}$", r"$I_{zz}$", r"$I_{xz}$", "$J$"]
@@ -447,9 +425,9 @@ class Wingbox:
 
         plt.show()
 
-    def drawMaterialMassDistribution(self):
+    def drawStructuralMassDistribution(self):
         plt.title("Material Mass Distribution")
-        plt.plot(self.crossectionYLocations, self.getMassDistributionLst())
+        plt.plot(self.crossectionYLocations, [self.getStructuralMassDistribution()(i) for i in self.crossectionYLocations])
         plt.xlabel('semi-span [m]')
         plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
 
@@ -457,7 +435,7 @@ class Wingbox:
 
     def drawFuelMassDistribution(self):
         plt.title("Fuel Mass Distribution")
-        plt.plot(self.crossectionYLocations, self.getFuelMassDistributionLst())
+        plt.plot(self.crossectionYLocations, [self.getFuelMassDistribution()(i) for i in self.crossectionYLocations])
 
         plt.xlabel('semi-span [m]')
         plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
