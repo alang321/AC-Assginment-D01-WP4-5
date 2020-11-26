@@ -278,9 +278,35 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
 
     plt.plot(speeds, n_values, 'black')
     plt.title(title)
-    plt.xlabel('Velocity')
-    plt.ylabel('Load')
-    plt.text(V_A, n_max, 'V_A') #add text to diagram
+    plt.xlabel('Velocity (m/s)')
+    plt.ylabel('Load (n)')
+    
+    plt.text(V_A+5, 0.2, 'V_A') #add text to diagram 
+    plt.axvline(x=V_A, color = 'black', linestyle = ':')
+
+    plt.text(V_D-35, 0.2, 'V_D') #add text to diagram 
+    plt.axvline(x=V_D, color = 'black', linestyle = ':')
+
+    plt.text(V_F+5, -0.5, 'V_C') #add text to diagram 
+    plt.axvline(x=V_F, color = 'black', linestyle = ':')
+    
+    plt.text(V_S1 * math.sqrt(2) - 70, 2, 'Flaps') #add text to diagram 
+    plt.text(V_S1 * math.sqrt(2) - 70, 1.5, 'Down') #add text to diagram 
+
+
+
+
+    plt.axhline(y=0, color = 'black', linestyle = ':')
+
+
+    
+    plt.xticks(np.arange(0, 400, 50))  #fixing the x axis 
+    plt.ylim(-1.5, 3)
+    plt.xlim(0,350)
+    
+    plt.yticks(np.arange(-1.5, 3, 0.5))  #fixing the y axis 
+
+
 
 
     x1 = np.linspace(0,V_A, 1000)
@@ -296,9 +322,14 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.plot(x1, f(x1), 'black')  # (0,0) to V_A curve
     plt.plot(x2, y2, 'black')  #flaps down curve
     plt.plot(x3, -f(x3), 'black')
+<<<<<<< HEAD
     plt.axvline(x=V_A, color = 'black', linestyle = '--')
     plt.vlines(x=V_S0, color = 'black', linestyle = '--')
  
+=======
+
+    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=0.5)
+>>>>>>> 283c6d273e88ad4577e54e473154720d8104d981
     return plt.show()
 
 plt.figure()
@@ -311,22 +342,31 @@ for i in range(len(V_all_list_sorted)):
     V_S1 = V_all_list_sorted[i][5]
         
     if i  == 0:
+        plt.subplot(331)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and SL')
     elif i % 9 == 1:
+        plt.subplot(332)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL150')
     elif i % 9 == 2:
+        plt.subplot(333)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL310')
     elif i % 9 == 3:
+        plt.subplot(334)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and SL')
     elif i % 9 == 4:
+        plt.subplot(335)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL150')
     elif i % 9 == 5:
+        plt.subplot(336)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL310')
     elif i % 9 == 6:
+        plt.subplot(337)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and SL')
     elif i % 9 == 7:
+        plt.subplot(338)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL150')
     elif i % 9 == 8:
+        plt.subplot(339)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL310')
             
 
