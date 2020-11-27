@@ -53,7 +53,7 @@ weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
 
 #quick calculations
 Z_mo = h_c
-R_1 = 1
+R_1 = 0.96
 R_2 = ZFW / MTOW
 F_gz = 1 - (Z_mo/76200)
 F_gm = math.sqrt(R_2 * math.tan(pi*R_1/4))
@@ -227,6 +227,7 @@ for weights, values in weights_dic.items():
         V_tot.append(V_F)
         V_tot.append(V_B)
 
+        max_load_factor_2 = 0
         for V in V_tot:
             C_L_alpha_h = get_C_L_alpha_h(V, T_h)
             time_constant = get_time_constant(values, V, rho_h, C_L_alpha_h)
@@ -245,8 +246,8 @@ for weights, values in weights_dic.items():
                     
                     gust_load_factor = get_gust_load_factor(t, U_ds, omega, time_constant)
 
-                    if gust_load_factor > max_load_factor:                      
-                        max_load_factor = gust_load_factor
+                    if gust_load_factor > max_load_factor_2:                      
+                        max_load_factor_2 = gust_load_factor
                         V_max_load = V
                         W_max_load = weights
                         H_max_load = H
@@ -259,14 +260,15 @@ for weights, values in weights_dic.items():
                         time_constant_max_load = time_constant
                         
                         
-print('Maximum gust load factor: {}'.format(max_load_factor))
-print('Occurst at:')
-print('Weight: {}'.format(W_max_load))
-print('Altitude: {}'.format(h_max_load))
-print('Velocity: {}'.format(V_max_load))
-print('Gust gradient distance: {}'.format(H_max_load))
+        print('Maximum gust load factor: {}'.format(max_load_factor_2+1))
+        print('Occurst at:')
+        print('Weight: {}'.format(W_max_load))
+        print('Altitude: {}'.format(h_max_load))
+        print('Velocity: {}'.format(V_max_load))
+        print('Gust gradient distance: {}'.format(H_max_load))
+        print('')
 
-print(n_max_load)
+
 ###--- Gust Loads Plotters ---###
                               
 def gust_load_plotter(n, U_ds, omega, time_constant):
@@ -287,7 +289,7 @@ def gust_load_plotter(n, U_ds, omega, time_constant):
 
     return plt.show()
 
-gust_load_plotter(n_max_load, U_ds_max_load, omega_max_load, time_constant_max_load)
+#gust_load_plotter(n_max_load, U_ds_max_load, omega_max_load, time_constant_max_load)
 
 ###--- V/n diagram ---###
 
@@ -305,7 +307,7 @@ def get_V_n_diagram(V, weight, altitude):
     C_L_alpha_h = get_C_L_alpha_h(V, T_h)
     time_constant = get_time_constant(value, V, rho_h, C_L_alpha_h)
             
-    for H in range(9, 108, 3):
+    for H in range(9, 108, 1):
         omega = get_omega(V, H)
         U_ds0 = get_U_ds(U_ref, F_g, H)
         n = 2*pi / omega
@@ -324,8 +326,6 @@ def get_V_n_diagram(V, weight, altitude):
 
     return max_load_factor
 
-print(get_VC_VD(T_dic['SL']))
-print(get_V_n_diagram(327, 'OEW', 'SL'))
 
 
 
@@ -355,12 +355,14 @@ def plot_V_n_diagram(weight, altitude):
     plt.plot(x1, y2, 'black')
     plt.plot(x2, y3, 'black')
     plt.plot(x2, y4, 'black')
+    plt.axhline(1, 0, 1, color = 'black', linestyle = '--')
     plt.vlines(V_D, (1-get_V_n_diagram(V_D, weight, altitude)),(get_V_n_diagram(V_D, weight, altitude)+1),  color = 'black',)
 
     return plt.show()
 
-plot_V_n_diagram('OEW', 'SL')
-print(1-get_V_n_diagram(V_D, 'OEW', 'SL'))
+#plot_V_n_diagram('OEW', 'SL')
+
+
 
 
                         
