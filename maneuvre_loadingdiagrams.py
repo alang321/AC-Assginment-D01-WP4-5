@@ -2,6 +2,30 @@ from aircraftProperties import AircraftProperties
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import xlsxwriter 
+
+###---Create xlsx file---###
+
+workbook = xlsxwriter.Workbook('Load_Table.xlsx') 
+worksheet = workbook.add_worksheet() 
+  
+#create columns
+worksheet.write('A1', 'Case') 
+worksheet.write('B1', 'Design Speed') 
+worksheet.write('C1', 'Speed Value') 
+worksheet.write('D1', 'Weight Key') 
+worksheet.write('E1', 'Weight Value')
+worksheet.write('F1', 'Altitude Key')
+worksheet.write('G1', 'Altitude [m]')
+
+
+#worksheet.write('F1', 'n') 
+#worksheet.write('G1', 'Fuel') 
+#orksheet.write('H1', 'Thrust') 
+
+global worksheet_key
+worksheet_key = 2    
+
 
 
 ###---constants---###
@@ -78,6 +102,7 @@ def get_VC_VD(T_h):
 
     V_C = M_c * math.sqrt(T_h * 402.058)
     V_D = V_C * 1.25
+    
 
     return V_C, V_D
 
@@ -113,11 +138,8 @@ def get_V_F(rho_h):
 
     return V_F
     
-
-
 ###---aerodynamic calculations---###
 C_L_alpha = 4.62
-
 
 ###---gust calculations---###
 Z_mo = h_c
@@ -184,8 +206,6 @@ def gust_load_factor(t, U_ds, omega, time_constant):
     return gust_load_factor
 
 
-
-
 ###---speeds results---###
 
 V_C_values = {}
@@ -195,7 +215,6 @@ V_D_values = {}
 V_A_values = {}
 V_B_values = {}
 V_F_values = {}
-
 
           
 for weights, values in weights_altitudes.items():
@@ -298,12 +317,15 @@ print(ZFW)
 
 
 
-###---MANEUVRE LOAD DIAGRAM---###
+###---MANEUVRE LOAD DIAGRAMS---###
+
 def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
 
+    plt.figure()
+    
     def f(x):
         return (x / V_S1)**2
-                  
+                      
     speeds = [V_A, V_D, V_D, V_F, V_S1]  
     n_values = [n_max, n_max, 0, n_min, n_min]
 
@@ -325,19 +347,13 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.text(V_S1 * math.sqrt(2) - 70, 1.5, 'Down') #add text to diagram 
 
 
-
-
     plt.axhline(y=0, color = 'black', linestyle = ':')
-
-
     
     plt.xticks(np.arange(0, 400, 50))  #fixing the x axis 
     plt.ylim(-1.5, 3)
     plt.xlim(0,350)
     
     plt.yticks(np.arange(-1.5, 3, 0.5))  #fixing the y axis 
-
-
 
 
     x1 = np.linspace(0,V_A, 1000)
@@ -356,9 +372,32 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.axvline(x=V_A, color = 'black', linestyle = '--')
     plt.axvline(x=V_S0, color = 'black', linestyle = '--')
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=0.5)
-    return plt.show()
+    
+    plt.show()
+    
+    #updating excel file
+    global worksheet_key
+    a = int(( worksheet_key - 2 ) / 5)
+    
+    speeds_dic = {"V_A": V_A, "V_D": V_D, "V_F": V_F, "V_S0": V_S0, "V_S1": V_S1}
 
-plt.figure()
+    for i in range(worksheet_key, worksheet_key+5):
+        
+        worksheet.write("A"+str(i),str(i-1))
+        worksheet.write("B"+str(i),str(list(speeds_dic.keys())[i-worksheet_key]))
+        worksheet.write("C"+str(i),str(list(speeds_dic.values())[i-worksheet_key]))
+        worksheet.write("D"+str(i),list(weights_altitudes.keys())[a])
+        worksheet.write("E"+str(i),str(list(weights_altitudes.values())[a][1]))
+        worksheet.write("F"+str(i),str(list(weights_altitudes.values())[a][0]))
+        worksheet.write("G"+str(i),h_dic[str(list(weights_altitudes.values())[a][0])])
+
+
+
+
+       
+    worksheet_key += 5
+    
+
 for i in range(len(V_all_list_sorted)):
 
     V_A = V_all_list_sorted[i][0]
@@ -368,31 +407,22 @@ for i in range(len(V_all_list_sorted)):
     V_S1 = V_all_list_sorted[i][5]
         
     if i  == 0:
-        plt.subplot(331)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and SL')
     elif i % 12 == 1:
-        plt.subplot(332)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at TOW with half payload and SL')
     elif i % 12 == 2:
-        plt.subplot(333)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at TOW with zero payload and SL')
     elif i % 12 == 3:
-        plt.subplot(334)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with full payload and FL310')
     elif i % 12 == 4:
-        plt.subplot(335)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with half payload and FL310')
     elif i % 12 == 5:
-        plt.subplot(336)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with zero payload and FL310')
     elif i % 12 == 6:
-        plt.subplot(337)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with full payload and FL310')
     elif i % 12 == 7:
-        plt.subplot(338)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with half payload and FL310')
     elif i % 12 == 8:
-        plt.subplot(339)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with zero payload and FL310')
     elif i % 12 == 9:
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with full payload and FL310')
@@ -406,6 +436,7 @@ for i in range(len(V_all_list_sorted)):
 
 
 
+workbook.close() 
 
 
 
