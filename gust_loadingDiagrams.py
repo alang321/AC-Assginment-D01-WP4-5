@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 h_0 = 0                                                              #sea level 
 rho_0 = 1.225
 T_0 = 288.15
-h_1 =  4572                                                          # ???? (intermediate altitude)
-rho_1 = 0.770816  
-T_1 = 258.432
+h_1 =  6096                                                         # ???? (intermediate altitude)
+rho_1 = 0.652694 
+T_1 = 248.526
 h_c = AircraftProperties.Cruise_constants["cruise altitude"]         #altitude at cruise 
 rho_c = AircraftProperties.Cruise_constants["density at cruise"]
 T_c = 226.733
@@ -23,7 +23,31 @@ MTOW = AircraftProperties.Weight["MTOW"]                             #maximum ta
 W_pl = AircraftProperties.Weight["payload at harmonic profile"]      #weight payload 
 OEW = AircraftProperties.Weight["OEW"]                               #operating empty weight
 ZFW = OEW + W_pl                                                     #zero fuel weight
+W_fuel = MTOW - ZFW
+
 weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
+TOW0_5 = OEW + 0.5*W_pl + W_fuel
+TOW0 = OEW + W_fuel
+
+Cff = (0.99*0.99*0.995*0.98*0.856)
+CW1 = Cff*W_fuel + OEW + W_pl
+CW0_5 = Cff*W_fuel + OEW + 0.5*W_pl
+CW0 = Cff*W_fuel + OEW
+
+Loiff = Cff*0.99*0.988
+LoiW1 = Loiff*W_fuel + OEW + W_pl
+LoiW0_5 = Loiff*W_fuel + OEW + 0.5*W_pl
+LoiW0 = Loiff*W_fuel + OEW
+
+Lff = Loiff*0.965*0.992
+LW1 = Lff*W_fuel + OEW + W_pl
+LW0_5 = Lff*W_fuel + OEW + 0.5*W_pl
+LW0 = Lff*W_fuel + OEW
+
+weights_altitudes = {'MTOW': ['SL', MTOW],'TOW_0.5': ['SL', TOW0_5], 'TOW_0':['SL', TOW0]
+                     , 'CW_1': ['FL310', CW1], 'CW_0.5': ['FL310', CW0_5], 'CW_0': ['FL310', CW0],
+                     'LoiW_1': ['FL200', LoiW1], 'LoiW_0.5': ['FL200', LoiW0_5], 'LoiW_0': ['FL200', LoiW0],
+                     'LW_1': ['SL', LW1], 'LW_0.5': ['SL', LW0_5], 'LW_0': ['SL', LW0],}
 
 #velocities
 M_c = AircraftProperties.Cruise_constants["mach at cruise"]
@@ -46,10 +70,9 @@ n_min = -1.0
 
 #dictionaries
 altitudes = ['SL','FL150','FL310']
-rho_h_dic = {'SL': rho_0, 'FL150': rho_1, 'FL310': rho_c}
-T_dic = {'SL': T_0,'FL150': T_1,'FL310': T_c}
-h_dic = {'SL': 0,'FL150': 4572,'FL310': 9449}
-weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
+rho_h_dic = {'SL': rho_0, 'FL200': rho_1, 'FL310': rho_c}
+T_dic = {'SL': T_0, 'FL200': T_1, 'FL310': T_c}
+h_dic = {'SL': 0, 'FL200': h_1, 'FL310': 9449}
 
 #quick calculations
 Z_mo = h_c
@@ -199,25 +222,24 @@ omega_max_load = 0
 n_max_load = 0
 time_constant_max_load = 0
 
-for weights, values in weights_dic.items():
-    for keys in altitudes:
+for weights, values in weights_altitudes.items():
         V_tot = []
 
-        h = h_dic[keys]
-        T_h = T_dic[keys]
-        rho_h = rho_h_dic[keys]
+        h = h_dic[values[0]]
+        T_h = T_dic[values[0]]
+        rho_h = rho_h_dic[values[0]]
     
         U_ref = get_U_ref(h)
         F_g = get_F_g(h)
-        weight_factor = get_weight_factor(values, rho_h, C_L_alpha)
+        weight_factor = get_weight_factor(values[1], rho_h, C_L_alpha)
         K_g = get_K_g(weight_factor)
         
         V_C, V_D = get_VC_VD(T_h)
-        V_S0 = get_V_S0(values, rho_h)
-        V_S1 = get_V_S1(values, rho_h)
+        V_S0 = get_V_S0(values[1], rho_h)
+        V_S1 = get_V_S1(values[1], rho_h)
         V_A = get_V_A(V_S1)
         V_F = get_V_F(rho_h)
-        V_B = get_V_B(values, K_g, V_S1, V_C, U_ref, C_L_alpha)
+        V_B = get_V_B(values[1], K_g, V_S1, V_C, U_ref, C_L_alpha)
         
         V_tot.append(V_C)
         V_tot.append(V_D)
@@ -230,7 +252,7 @@ for weights, values in weights_dic.items():
         max_load_factor_2 = 0
         for V in V_tot:
             C_L_alpha_h = get_C_L_alpha_h(V, T_h)
-            time_constant = get_time_constant(values, V, rho_h, C_L_alpha_h)
+            time_constant = get_time_constant(values[1], V, rho_h, C_L_alpha_h)
             
             for H in range(9, 108, 1):
                 omega = get_omega(V, H)
@@ -251,7 +273,7 @@ for weights, values in weights_dic.items():
                         V_max_load = V
                         W_max_load = weights
                         H_max_load = H
-                        h_max_load = keys
+                        h_max_load = values[0]
                         t_max_load = t
                         n_max_load = n
 
@@ -267,6 +289,7 @@ for weights, values in weights_dic.items():
         print('Velocity: {}'.format(V_max_load))
         print('Gust gradient distance: {}'.format(H_max_load))
         print('')
+        
 
 
 ###--- Gust Loads Plotters ---###
@@ -283,18 +306,19 @@ def gust_load_plotter(n, U_ds, omega, time_constant):
     plt.title('Plot of the variation of the gust load factor as function of time')
 
     for x in x1:
-        y1.append(f(x))
+        y1.append(f(x)+1)
 
     plt.plot(x1, y1, 'black')
 
     return plt.show()
 
-#gust_load_plotter(n_max_load, U_ds_max_load, omega_max_load, time_constant_max_load)
+gust_load_plotter(n_max_load, U_ds_max_load, omega_max_load, time_constant_max_load)
 
 ###--- V/n diagram ---###
 
 def get_V_n_diagram(V, weight, altitude):
-    value = weights_dic[weight]
+
+    value = weight
     max_load_factor = 0
     h = h_dic[altitude]
     T_h = T_dic[altitude]
@@ -329,7 +353,12 @@ def get_V_n_diagram(V, weight, altitude):
 
 
 
-def plot_V_n_diagram(weight, altitude):
+
+def plot_V_n_diagram(key):
+    lst = weights_altitudes[key]
+    altitude = lst[0]
+    weight = lst[1]
+    
     T_h = T_dic[altitude]
     V_C, V_D = get_VC_VD(T_h)
 
@@ -360,7 +389,7 @@ def plot_V_n_diagram(weight, altitude):
 
     return plt.show()
 
-#plot_V_n_diagram('OEW', 'SL')
+plot_V_n_diagram('LW_0')
 
 
 
