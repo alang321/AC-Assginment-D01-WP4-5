@@ -17,11 +17,10 @@ worksheet.write('D1', 'Weight Key')
 worksheet.write('E1', 'Weight Value')
 worksheet.write('F1', 'Altitude Key')
 worksheet.write('G1', 'Altitude [m]')
+worksheet.write('H1', 'n') 
+worksheet.write('I1', 'Fuel Weight') 
 
-
-#worksheet.write('F1', 'n') 
-#worksheet.write('G1', 'Fuel') 
-#orksheet.write('H1', 'Thrust') 
+worksheet.write('J1', 'Thrust') 
 
 global worksheet_key
 worksheet_key = 2    
@@ -334,13 +333,16 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.xlabel('Velocity (m/s)')
     plt.ylabel('Load (n)')
     
-    plt.text(V_A+5, 0.2, 'V_A') #add text to diagram 
+    plt.text(V_A+5, -1.25, 'V_A') #add text to diagram 
     plt.axvline(x=V_A, color = 'black', linestyle = ':')
+    
+    plt.text(V_S1+5, -1.25, 'V_S1') #add text to diagram 
+    plt.axvline(x=V_S1, color = 'red', linestyle = ':')
 
-    plt.text(V_D-35, 0.2, 'V_D') #add text to diagram 
+    plt.text(V_D+5, -1.25, 'V_D') #add text to diagram 
     plt.axvline(x=V_D, color = 'black', linestyle = ':')
 
-    plt.text(V_F+5, -0.5, 'V_C') #add text to diagram 
+    plt.text(V_F+5, -1.25, 'V_C') #add text to diagram 
     plt.axvline(x=V_F, color = 'black', linestyle = ':')
     
     plt.text(V_S1 * math.sqrt(2) - 70, 2, 'Flaps') #add text to diagram 
@@ -375,11 +377,19 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     
     plt.show()
     
-    #updating excel file
+    ###---updating excel file---###
+    
     global worksheet_key
     a = int(( worksheet_key - 2 ) / 5)
     
     speeds_dic = {"V_A": V_A, "V_D": V_D, "V_F": V_F, "V_S0": V_S0, "V_S1": V_S1}
+    
+    fuel_weights = {'MTOW': W_fuel,'TOW_0.5': W_fuel, 'TOW_0':W_fuel, 'CW_1': Cff*W_fuel, 
+                    'CW_0.5': Cff*W_fuel, 'CW_0': Cff*W_fuel,'LoiW_1': Loiff*W_fuel, 
+                    'LoiW_0.5': Loiff*W_fuel, 'LoiW_0': Loiff*W_fuel,'LW_1': Lff*W_fuel, 
+                    'LW_0.5': Lff*W_fuel, 'LW_0': Lff*W_fuel,}
+    
+    loads = {"V_A": n_max, "V_D": n_max, "V_F": n_min, "V_S0": ( V_S0 / V_S1 ) ** 2, "V_S1": 1}
 
     for i in range(worksheet_key, worksheet_key+5):
         
@@ -390,6 +400,9 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
         worksheet.write("E"+str(i),str(list(weights_altitudes.values())[a][1]))
         worksheet.write("F"+str(i),str(list(weights_altitudes.values())[a][0]))
         worksheet.write("G"+str(i),h_dic[str(list(weights_altitudes.values())[a][0])])
+        worksheet.write("I"+str(i),str(fuel_weights[str(list(weights_altitudes.keys())[a])]))
+        worksheet.write("H"+str(i),str(loads[list(speeds_dic.keys())[i-worksheet_key]]))
+
 
 
 
