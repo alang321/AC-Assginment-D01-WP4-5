@@ -93,12 +93,6 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
             sparsOutput.append([sectionStartingLocations[sectionIndex], sectionEndLocations[sectionIndex], outerSparLocations[0] + (sparDistance/(extraSpars[sectionIndex] + 1)) * (i + 1), sparThicknessFunc])
 
     return topStringersOutput, bottomStringersOutput, sparsOutput, sparThicknessFunc
-
-
-wingloading = getWingLoading(velocity=232.412, altitude=AircraftProperties.Cruise_constants["cruise altitude"], weight=1866756, engineThrustFactor=1, loadFactor=1, neglectTangential=True)
-#wingloading = getWingLoading(velocity=232.412, altitude=AircraftProperties.Cruise_constants["cruise altitude"], weight=1866756, engineThrustFactor=1, loadFactor=1, neglectTangential=False)
-plotWingLoading(wingloading[0])
-
 #wingbox definition start
 
 scale = 200
