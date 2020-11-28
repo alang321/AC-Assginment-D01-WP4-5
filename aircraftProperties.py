@@ -102,7 +102,7 @@ class AircraftProperties:
         "most aft center of gravity": 33.5527887903292  # m
     }
     Fuel = {
-        "total fuel volume required": 59.3428633241,  # $m^3$
+        "total fuel volume required": 88.898,  # $m^3$
         "fuel density": 804, # kg/m^3
     }
     Cruise_constants = {

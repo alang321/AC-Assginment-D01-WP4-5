@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 h_0 = 0                                                              #sea level 
 rho_0 = 1.225
 T_0 = 288.15
-h_1 =  4572                                                          # ???? (intermediate altitude)
-rho_1 = 0.770816  
-T_1 = 258.432
+h_1 =  6096                                                         # ???? (intermediate altitude)
+rho_1 = 0.652694 
+T_1 = 248.526
 h_c = AircraftProperties.Cruise_constants["cruise altitude"]         #altitude at cruise 
 rho_c = AircraftProperties.Cruise_constants["density at cruise"]
 T_c = 226.733
@@ -24,7 +24,32 @@ MTOW = AircraftProperties.Weight["MTOW"]                             #maximum ta
 W_pl = AircraftProperties.Weight["payload at harmonic profile"]      #weight payload 
 OEW = AircraftProperties.Weight["OEW"]                               #operating empty weight
 ZFW = OEW + W_pl                                                     #zero fuel weight
+W_fuel = MTOW - ZFW
+
 weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
+TOW0_5 = OEW + 0.5*W_pl + W_fuel
+TOW0 = OEW + W_fuel
+
+Cff = (0.99*0.99*0.995*0.98*0.856)
+CW1 = Cff*W_fuel + OEW + W_pl
+CW0_5 = Cff*W_fuel + OEW + 0.5*W_pl
+CW0 = Cff*W_fuel + OEW
+
+Loiff = Cff*0.99*0.988
+LoiW1 = Loiff*W_fuel + OEW + W_pl
+LoiW0_5 = Loiff*W_fuel + OEW + 0.5*W_pl
+LoiW0 = Loiff*W_fuel + OEW
+
+Lff = Loiff*0.965*0.992
+LW1 = Lff*W_fuel + OEW + W_pl
+LW0_5 = Lff*W_fuel + OEW + 0.5*W_pl
+LW0 = Lff*W_fuel + OEW
+
+weights_altitudes = {'MTOW': ['SL', MTOW],'TOW_0.5': ['SL', TOW0_5], 'TOW_0':['SL', TOW0]
+                     , 'CW_1': ['FL310', CW1], 'CW_0.5': ['FL310', CW0_5], 'CW_0': ['FL310', CW0],
+                     'LoiW_1': ['FL200', LoiW1], 'LoiW_0.5': ['FL200', LoiW0_5], 'LoiW_0': ['FL200', LoiW0],
+                     'LW_1': ['SL', LW1], 'LW_0.5': ['SL', LW0_5], 'LW_0': ['SL', LW0],}
+
 
 #velocities
 M_c = AircraftProperties.Cruise_constants["mach at cruise"]
@@ -37,19 +62,15 @@ C_L_max = AircraftProperties.Lift["CL max without flaps"]
 C_MAC = AircraftProperties.Planform["MAC"]
 
 
-
 #maximimum load factors
 n_max = 2.5
 n_min = -1.0
 
 #dictionaries
-rho_h_dic = {'SL': rho_0, 'FL150': rho_1, 'FL310': rho_c}
-T_dic = {'SL': T_0, 'FL150': T_1, 'FL310': T_c}
-h_dic = {'SL': 0, 'FL150': 4572, 'FL310': 9449}
+rho_h_dic = {'SL': rho_0, 'FL200': rho_1, 'FL310': rho_c}
+T_dic = {'SL': T_0, 'FL200': T_1, 'FL310': T_c}
+h_dic = {'SL': 0, 'FL200': 4572, 'FL310': 9449}
 weights_dic = {'OEW': OEW, 'ZFW': ZFW, 'MTOW': MTOW}
-
-
-
 
 ###---maneuver calculations---###
 
@@ -177,43 +198,39 @@ V_F_values = {}
 
 
           
-for weights, values in weights_dic.items():
-    for altitudes, temperatures in T_dic.items():
+for weights, values in weights_altitudes.items():
 
-        nametagC = 'V_C {} {}'.format(weights, altitudes)
-        nametagD = 'V_D {} {}'.format(weights, altitudes)
+    nametagC = 'V_C {} {}'.format(weights, values[0])
+    nametagD = 'V_D {} {}'.format(weights, values[0])
+    nametagS0 = 'V_S0 {} {}'.format(weights, values[0])
+    nametagS1 = 'V_S1 {} {}'.format(weights, values[0])
+    nametagA = 'V_A {} {}'.format(weights, values[0])
+    nametagB = 'V_B {} {}'.format(weights, values[0])
+    nametagF = 'V_F {} {}'.format(weights, values[0])
 
-        V_C, V_D = get_VC_VD(temperatures)
+    T_h = T_dic[values[0]]
+    densitys = rho_h_dic[values[0]]
         
-        V_C_values[nametagC] = V_C
-        V_D_values[nametagD] = V_D
+    V_C, V_D = get_VC_VD(T_h)
+    V_S0 = get_V_S0(values[1], densitys)
+    V_S1 = get_V_S1(values[1], densitys)
+    V_A = get_V_A(V_S1)
+    V_F = get_V_F(densitys)
 
-    
-    for altitudes, densitys in rho_h_dic.items():
+    altitude = h_dic[values[0]]
+    U_ref = get_U_ref(altitude)
+    weight_factor = get_weight_factor(values[1], densitys)
+    K_g = get_K_g(weight_factor)
+    V_B = get_V_B(values[1], K_g, V_S1)
 
-        nametagS0 = 'V_S0 {} {}'.format(weights, altitudes)
-        nametagS1 = 'V_S1 {} {}'.format(weights, altitudes)
-        nametagA = 'V_A {} {}'.format(weights, altitudes)
-        nametagB = 'V_B {} {}'.format(weights, altitudes)
-        nametagF = 'V_F {} {}'.format(weights, altitudes)
-
-        V_S0 = get_V_S0(values, densitys)
-        V_S1 = get_V_S1(values, densitys)
-        V_A = get_V_A(V_S1)
-        V_F = get_V_F(densitys)
-
-        altitude = h_dic[altitudes]
-        U_ref = get_U_ref(altitude)
-        weight_factor = get_weight_factor(values, densitys)
-        K_g = get_K_g(weight_factor)
-        V_B = get_V_B(values, K_g, V_S1)
-        
-        V_S0_values[nametagS0] = V_S0
-        V_S1_values[nametagS1] = V_S1
-        V_A_values[nametagA] = V_A
-        V_B_values[nametagB] = V_B
-        V_F_values[nametagF] = V_F
-        
+    V_C_values[nametagC] = V_C
+    V_D_values[nametagD] = V_D 
+    V_S0_values[nametagS0] = V_S0
+    V_S1_values[nametagS1] = V_S1
+    V_A_values[nametagA] = V_A
+    V_B_values[nametagB] = V_B
+    V_F_values[nametagF] = V_F
+   
 
 
 ###---converting results to usable list---###        
@@ -229,42 +246,55 @@ V_all_list = list(V_all_dict.values())
 
 
 
-OEW_SL = []
-OEW_FL150 = []
-OEW_FL310 = []
-ZFW_SL = []
-ZFW_FL150 = []
-ZFW_FL310 = []
-MTOW_SL = []
-MTOW_FL150 = []
-MTOW_FL310 = []
+MTOW = []
+TOW_0_5 = []
+TOW_0 = []
+CW_1 = []
+CW_0_5 = []
+CW_0 = []
+LoiW_1 = []
+LoiW_0_5 = []
+LoiW_0 = []
+LW_1 = []
+LW_0_5 = []
+LW_0 = []
 
 for i in range(len(V_all_list)): 
-    if i % 9 == 0:
-        OEW_SL.append(V_all_list[i])
-    elif i % 9 == 1:
-        OEW_FL150.append(V_all_list[i])
-    elif i % 9 == 2:
-        OEW_FL310.append(V_all_list[i])
-    elif i % 9 == 3:
-        ZFW_SL.append(V_all_list[i])
-    elif i % 9 == 4:
-        ZFW_FL150.append(V_all_list[i])
-    elif i % 9 == 5:
-        ZFW_FL310.append(V_all_list[i])
-    elif i % 9 == 6:
-        MTOW_SL.append(V_all_list[i])
-    elif i % 9 == 7:
-        MTOW_FL150.append(V_all_list[i])
-    elif i % 9 == 8:
-        MTOW_FL310.append(V_all_list[i])
+    if i % 12 == 0:
+        MTOW.append(V_all_list[i])
+    elif i % 12 == 1:
+        TOW_0_5.append(V_all_list[i])
+    elif i % 12 == 2:
+        TOW_0.append(V_all_list[i])
+    elif i % 12 == 3:
+        CW_1.append(V_all_list[i])
+    elif i % 12 == 4:
+        CW_0_5.append(V_all_list[i])
+    elif i % 12 == 5:
+        CW_0.append(V_all_list[i])
+    elif i % 12 == 6:
+        LoiW_1.append(V_all_list[i])
+    elif i % 12 == 7:
+        LoiW_0_5.append(V_all_list[i])
+    elif i % 12 == 8:
+        LoiW_0.append(V_all_list[i])
+    elif i % 12 == 9:
+        LW_1.append(V_all_list[i])
+    elif i % 12 == 10:
+        LW_0_5.append(V_all_list[i])
+    elif i % 12 == 11:
+        LW_0.append(V_all_list[i])
 
-V_all_list_sorted = [OEW_SL, OEW_FL150, OEW_FL310, ZFW_SL, ZFW_FL150, ZFW_FL310, MTOW_SL, MTOW_FL150, MTOW_FL310]
+V_all_list_sorted = [MTOW, TOW_0_5, TOW_0, CW_1, CW_0_5, CW_0, LoiW_1, LoiW_0_5, LoiW_0, LW_1, LW_0_5, LW_0]
 print(len(V_all_list_sorted))
 
 print(V_all_list_sorted[0])
 
-
+print(LW0)
+print(LW0_5)
+print(LW1)
+print(OEW)
+print(ZFW)
 
 
 
@@ -301,7 +331,7 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
 
 
     
-    plt.xticks(np.arange(0, 350, 50))  #fixing the x axis 
+    plt.xticks(np.arange(0, 400, 50))  #fixing the x axis 
     plt.ylim(-1.5, 3)
     plt.xlim(0,350)
     
@@ -323,15 +353,12 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.plot(x1, f(x1), 'black')  # (0,0) to V_A curve
     plt.plot(x2, y2, 'black')  #flaps down curve
     plt.plot(x3, -f(x3), 'black')
-    
- 
-
+    plt.axvline(x=V_A, color = 'black', linestyle = '--')
+    plt.axvline(x=V_S0, color = 'black', linestyle = '--')
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=0.5)
-
     return plt.show()
 
 plt.figure()
-    
 for i in range(len(V_all_list_sorted)):
 
     V_A = V_all_list_sorted[i][0]
@@ -342,31 +369,39 @@ for i in range(len(V_all_list_sorted)):
         
     if i  == 0:
         plt.subplot(331)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and SL')
-    elif i % 9 == 1:
-        plt.subplot(332)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL150')
-    elif i % 9 == 2:
-        plt.subplot(333)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at OEW and FL310')
-    elif i % 9 == 3:
-        plt.subplot(334)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and SL')
-    elif i % 9 == 4:
-        plt.subplot(335)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL150')
-    elif i % 9 == 5:
-        plt.subplot(336)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at ZFW and FL310')
-    elif i % 9 == 6:
-        plt.subplot(337)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and SL')
-    elif i % 9 == 7:
+    elif i % 12 == 1:
+        plt.subplot(332)
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at TOW with half payload and SL')
+    elif i % 12 == 2:
+        plt.subplot(333)
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at TOW with zero payload and SL')
+    elif i % 12 == 3:
+        plt.subplot(334)
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with full payload and FL310')
+    elif i % 12 == 4:
+        plt.subplot(335)
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with half payload and FL310')
+    elif i % 12 == 5:
+        plt.subplot(336)
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with zero payload and FL310')
+    elif i % 12 == 6:
+        plt.subplot(337)
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with full payload and FL310')
+    elif i % 12 == 7:
         plt.subplot(338)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL150')
-    elif i % 9 == 8:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with half payload and FL310')
+    elif i % 12 == 8:
         plt.subplot(339)
-        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and FL310')
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with zero payload and FL310')
+    elif i % 12 == 9:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with full payload and FL310')
+    elif i % 12 == 10:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with half payload and FL310')
+    elif i % 12 == 11:
+        plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with zero payload and FL310')
+
+
             
 
 

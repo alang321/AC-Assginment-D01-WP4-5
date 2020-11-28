@@ -4,6 +4,7 @@ import numpy as np
 from Polygon import Polygon
 import airfoilDataParser
 from aircraftProperties import AircraftProperties
+import operator
 
 
 class WingboxCrossection:
@@ -73,7 +74,7 @@ class WingboxCrossection:
         self.negativeCentroidContributions.extend(self.insidePolygons)
 
         #calculate total enclosed area and crossectional area
-        self.materialArea = self.__getMaterialArea()
+        self.totalCrossectionalArea = self.__getTotalCrosssectionalArea()
         self.enclosedArea = self.__getEnclosedArea()
         self.internalArea = self.__getInternalArea()
 
@@ -160,7 +161,7 @@ class WingboxCrossection:
                 centroid[axis] -= polygonCentroid[axis] * polygon.getArea()
 
         for axis in range(2):
-            centroid[axis] /= self.materialArea
+            centroid[axis] /= self.totalCrossectionalArea
 
         return centroid
 
@@ -291,7 +292,7 @@ class WingboxCrossection:
             sum += i.getArea()
         return sum
 
-    def __getMaterialArea(self):
+    def __getTotalCrosssectionalArea(self):
         totalArea = 0
 
         for polygonPositive in self.positiveCentroidContributions:
@@ -335,15 +336,15 @@ class WingboxCrossection:
         return float(f_upper(location)), float(f_lower(location))
 
     #calculate the angle between a line defined by 2 coordinates and the x axis
-    def __getAngleLineHorizontal(self, coord1, coord2):
+    def __getAngleLineHorizontal(coord1, coord2):
         if coord2[0] == coord1[0]:
             return np.pi/2
         return np.arctan((coord2[1]-coord1[1])/(coord2[0]-coord1[0]))
 
-    def __getDistanceBetweenPoints(self, coord1, coord2):
+    def __getDistanceBetweenPoints(coord1, coord2):
         return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
 
-    def __getZfromXLine(self, coord1, coord2, xList):
+    def __getZfromXLine(coord1, coord2, xList):
         k = (coord1[1]-coord2[1])/(coord1[0]-coord2[0])
         d = coord1[1] - k * coord1[0]
 
