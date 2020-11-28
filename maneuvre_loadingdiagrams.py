@@ -19,7 +19,6 @@ worksheet.write('F1', 'Altitude Key')
 worksheet.write('G1', 'Altitude [m]')
 worksheet.write('H1', 'n') 
 worksheet.write('I1', 'Fuel Weight') 
-
 worksheet.write('J1', 'Thrust') 
 
 global worksheet_key
