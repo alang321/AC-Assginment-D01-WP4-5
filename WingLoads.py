@@ -19,7 +19,7 @@ class WingLoads:
     __internalForceNames = [r"$V_x$", r"Invalid", r"$V_z$"]
 
     integrationLimit = 50
-    integrationFidelity = 50
+    integrationFidelity = 20
 
     def __init__(self, pointForces, distributedForces, distributedMoments):
         self.limits = [0, self.__semispan]
@@ -82,7 +82,7 @@ class WingLoads:
                     normalAtPoint += force[0]
             normalForce.append(normalAtPoint)
 
-        normalFunc = interp1d(yList, normalForce, kind='cubic')
+        normalFunc = interp1d(yList, normalForce)
 
         self.__normalForce = normalFunc
         return normalFunc
@@ -127,7 +127,7 @@ class WingLoads:
             momentAtPoint = -i[0]
             # contribution from distributed moment
             j = quad(self.distributedMoments[axis], yVal, self.limits[1], limit=limit)
-            momentAtPoint += j[0]
+            momentAtPoint -= j[0]
 
             #contribution from point moments created by point forces
             for moment in self.perAxisPointMoments[axis]:
@@ -136,7 +136,10 @@ class WingLoads:
 
             internalMoment.append(momentAtPoint)
 
-        momentFunc = interp1d(yList, internalMoment, kind='cubic')
+        if axis == 1:
+            momentFunc = interp1d(yList, [-i for i in internalMoment])
+        else:
+            momentFunc = interp1d(yList, internalMoment)
 
         self.__internalMoments[axis] = momentFunc
         return momentFunc

@@ -28,13 +28,14 @@ class Wingbox:
         self.leadingedgeXPosTip = self.leadingEdgeXPos(self.semispan) # x position of the leading edge of the tip chord
 
         #ribs
-        self.ribLocations = [i * self.semispan for i in ribLocations]
+        self.ribLocations = ribLocations
         self.ribLines = []
         for rib in self.ribLocations:
-            lexpos = self.leadingEdgeXPos(rib)
-            xVals = [lexpos, lexpos + self.getChordAtY(rib)]
-            yVals = [rib, rib]
-            self.ribLines.append([xVals, yVals])
+            if rib < self.semispan:
+                lexpos = self.leadingEdgeXPos(rib)
+                xVals = [lexpos, lexpos + self.getChordAtY(rib)]
+                yVals = [rib, rib]
+                self.ribLines.append([xVals, yVals])
 
         #spars
         self.spars = spars
@@ -121,8 +122,7 @@ class Wingbox:
 
         return interp1d(self.crossectionYLocations, structuralMass)
 
-    def getFuelMassDistribution(self):
-        #todo : fuel mass over whole wing
+    def getFuelMassDistribution(self, evenlyDistributed=True):
         fuelMass = []
         totalVolumeSoFar = 0
         ydist = self.crossectionYLocations[1]-self.crossectionYLocations[0] # assumes equal crosssection spacing
@@ -130,10 +130,15 @@ class Wingbox:
         for crosssection in self.crosssecctions:
             totalVolumeSoFar += ydist * crosssection.internalArea
 
-            if totalVolumeSoFar < self.__fuelVolumeReq:
+            if totalVolumeSoFar < self.__fuelVolumeReq or evenlyDistributed:
                 fuelMass.append(crosssection.internalArea * self.__fuelDensity)
             else:
                 fuelMass.append(0)
+
+        if evenlyDistributed:
+            factor = (self.__fuelVolumeReq/2)/totalVolumeSoFar
+
+            fuelMass = [i * factor for i in fuelMass]
 
         return interp1d(self.crossectionYLocations, fuelMass)
 
@@ -222,6 +227,9 @@ class Wingbox:
                                   flangeThicknesses=flangeThicknesses, stringersTop=stringers[0], stringersBottom=stringers[1], yLocation=posY)
 
     def __getLineIntersection(self, xList, yList, posY):
+        if xList[0] == xList[1]: # this happens if at the center line of the wing, ugly way to do it but it works so w/e
+            return xList[0]
+
         if yList[0] <= posY <= yList[1]:
             k = (yList[0] - yList[1]) / (xList[0] - xList[1])
             d = yList[0] - k * xList[0]
@@ -336,13 +344,9 @@ class Wingbox:
 
         return max, yLoc
 
-    def draw(self, top=True):
+    def draw(self, drawTopStringers=True, drawBottomStringers=True):
         plt.clf()
 
-        if top:
-            plt.title("Top View")
-        else:
-            plt.title("Bottom View")
 
         #Planform
         rotatedPlanform = self.planformPolygon.getRotatedPolygon(np.deg2rad(90))
@@ -358,16 +362,13 @@ class Wingbox:
             plt.plot(sparLine[1], sparLine[0], color="blue")
 
         #draw stringers
-        if top:
-            a = enumerate(reversed(self.stringerLines))
-            color = ["pink", "green"]
-        else:
-            a = enumerate(self.stringerLines)
-            color = ["green", "pink"]
+        if drawTopStringers:
+            for stringer in self.stringerLines[0]:
+                plt.plot(stringer[1], stringer[0], color="green")
 
-        for index, stringerLineList in a:
-            for stringer in stringerLineList:
-                plt.plot(stringer[1], stringer[0], color=color[index])
+        if drawBottomStringers:
+            for stringer in self.stringerLines[1]:
+                plt.plot(stringer[1], stringer[0], color="pink")
 
         # x, y ranges and same scale
         plt.ylim(-0.05*self.rootchord, 1.05 * self.rootchord)

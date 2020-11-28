@@ -290,8 +290,6 @@ class WingboxCrossection:
         sum = 0
         for i in self.insidePolygons:
             sum += i.getArea()
-        for i in self.stringerPolygons:
-            sum -= i.getArea()
         return sum
 
     def __getMaterialArea(self):
