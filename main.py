@@ -132,7 +132,7 @@ wingbox.draw(drawBottomStringers=False)
 wingbox.drawStructuralMassDistribution()
 wingbox.drawFuelMassDistribution()
 
-wingloading = getWingLoading(velocity=232.412, altitude=AircraftProperties.Cruise_constants["cruise altitude"], weight=1866756, engineThrustFactor=0, loadFactor=1, fuelMassDistribution=wingbox.getFuelMassDistribution(), fuelMassFactor=0.8, structuralMassDistribution=wingbox.getStructuralMassDistribution(), neglectTangential=True)
+wingloading = getWingLoading(velocity=232.412, altitude=AircraftProperties.Cruise_constants["cruise altitude"], weight=1866756, engineThrustFactor=0, loadFactor=1, fuelMassDistribution=wingbox.getFuelMassDistribution(), fuelMassFactor=0.8, neglectTangential=True)
 #wingloading = getWingLoading(velocity=232.412, altitude=AircraftProperties.Cruise_constants["cruise altitude"], weight=1866756, engineThrustFactor=1, loadFactor=1, neglectTangential=False)
 plotWingLoading(wingloading[0])
 
