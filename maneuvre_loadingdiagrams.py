@@ -368,40 +368,37 @@ for i in range(len(V_all_list_sorted)):
     V_S1 = V_all_list_sorted[i][5]
         
     if i  == 0:
-        plt.subplot(341)
+        plt.subplot(331)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at MTOW and SL')
     elif i % 12 == 1:
-        plt.subplot(342)
+        plt.subplot(332)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at TOW with half payload and SL')
     elif i % 12 == 2:
-        plt.subplot(343)
+        plt.subplot(333)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at TOW with zero payload and SL')
     elif i % 12 == 3:
-        plt.subplot(344)
+        plt.subplot(334)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with full payload and FL310')
     elif i % 12 == 4:
-        plt.subplot(345)
+        plt.subplot(335)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with half payload and FL310')
     elif i % 12 == 5:
-        plt.subplot(346)
+        plt.subplot(336)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at CW with zero payload and FL310')
     elif i % 12 == 6:
-        plt.subplot(347)
+        plt.subplot(337)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with full payload and FL310')
     elif i % 12 == 7:
-        plt.subplot(348)
+        plt.subplot(338)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with half payload and FL310')
     elif i % 12 == 8:
-        plt.subplot(349)
+        plt.subplot(339)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LoiW with zero payload and FL310')
     elif i % 12 == 9:
-        plt.subplot(3410)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with full payload and FL310')
     elif i % 12 == 10:
-        plt.subplot(3411)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with half payload and FL310')
     elif i % 12 == 11:
-        plt.subplot(3412)
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with zero payload and FL310')
 
 
