@@ -45,7 +45,7 @@ coefficientFunctions = [[Cl0Func, Cl10Func],
                         [Cm0Func, Cm10Func]]
 
 #for drawing
-aerodynamicCoefficientsDrawing = [[Cl0Func, "Lift coefficient at 0 deg"], [Cl10Func, "Lift coefficient at 10 deg"], [Cd0Func, "Drag coefficient at 0 deg"], [Cd10Func, "Drag coefficient at 10 deg"], [Cm0Func, "Moment around c/4 0 deg"], [Cm10Func, "Moment around c/4 10 deg"]]
+aerodynamicCoefficientsDrawing = [[Cl0Func, r"$C_l$ at $\alpha=0^\circ$"], [Cl10Func, r"$C_l$ at $\alpha=10^\circ$"], [Cd0Func, r"$C_d$ at $\alpha=0^\circ$"], [Cd10Func, r"$C_d$ at $\alpha=10^\circ$"], [Cm0Func, r"$C_m$ at $\alpha=0^\circ$"], [Cm10Func, r"$C_m$ at $\alpha=10^\circ$"]]
 
 
 def getNormalTangentialMomentAOA(cLd, xovercCentroid, v, altitude):
