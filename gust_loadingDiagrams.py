@@ -34,7 +34,7 @@ S = AircraftProperties.Planform["surface area"]
 C_L_max_flaps = AircraftProperties.Lift["CL max with flaps"]
 C_L_max = AircraftProperties.Lift["CL max without flaps"]
 C_MAC = AircraftProperties.Planform["MAC"]
-C_L_alpha = 4.62
+C_L_alpha = 4.0
 AR = AircraftProperties.Planform["aspect ratio"]
 half_c_sweep = AircraftProperties.Planform["half-chord sweep"]
 eta = 0.95
@@ -231,7 +231,7 @@ for weights, values in weights_dic.items():
             C_L_alpha_h = get_C_L_alpha_h(V, T_h)
             time_constant = get_time_constant(values, V, rho_h, C_L_alpha_h)
             
-            for H in range(9, 108, 3):
+            for H in range(9, 108, 1):
                 omega = get_omega(V, H)
                 U_ds0 = get_U_ds(U_ref, F_g, H)
                 n = 2*pi / omega
@@ -241,7 +241,7 @@ for weights, values in weights_dic.items():
                 else:
                     U_ds = U_ds0 * 0.5
 
-                for t in np.linspace(0, n, 1000):
+                for t in np.linspace(0, n, 100):
                     
                     gust_load_factor = get_gust_load_factor(t, U_ds, omega, time_constant)
 
@@ -288,7 +288,84 @@ def gust_load_plotter(n, U_ds, omega, time_constant):
     return plt.show()
 
 gust_load_plotter(n_max_load, U_ds_max_load, omega_max_load, time_constant_max_load)
+
+###--- V/n diagram ---###
+
+def get_V_n_diagram(V, weight, altitude):
+    value = weights_dic[weight]
+    max_load_factor = 0
+    h = h_dic[altitude]
+    T_h = T_dic[altitude]
+    rho_h = rho_h_dic[altitude]
+        
+    U_ref = get_U_ref(h)
+    F_g = get_F_g(h)
+    V_C, V_D = get_VC_VD(T_h)
+
+    C_L_alpha_h = get_C_L_alpha_h(V, T_h)
+    time_constant = get_time_constant(value, V, rho_h, C_L_alpha_h)
             
+    for H in range(9, 108, 3):
+        omega = get_omega(V, H)
+        U_ds0 = get_U_ds(U_ref, F_g, H)
+        n = 2*pi / omega
+
+        if V <= V_C:
+            U_ds = U_ds0
+        else:
+            U_ds = U_ds0 * 0.5
+
+        for t in np.linspace(0, n, 100):
+                        
+            gust_load_factor = get_gust_load_factor(t, U_ds, omega, time_constant)
+
+            if gust_load_factor > max_load_factor:                      
+                max_load_factor = gust_load_factor
+
+    return max_load_factor
+
+print(get_VC_VD(T_dic['SL']))
+print(get_V_n_diagram(327, 'OEW', 'SL'))
+
+
+
+def plot_V_n_diagram(weight, altitude):
+    T_h = T_dic[altitude]
+    V_C, V_D = get_VC_VD(T_h)
+
+    x1 = np.linspace(0.01, V_C, 100)
+    x2 = np.linspace(V_C, V_D, 50)
+    
+
+    y1 = []
+    y2 = []
+    y3 = np.linspace(1+get_V_n_diagram(V_C, weight, altitude), 1+get_V_n_diagram(V_D, weight, altitude), 50)
+    y4 = np.linspace(1 - get_V_n_diagram(V_C, weight, altitude), 1 - get_V_n_diagram(V_D, weight, altitude), 50)
+    
+    plt.xlabel('V')
+    plt.ylabel('n')
+    plt.title('Plot of the variation of the gust load factor as function of time')
+
+    for x in x1:
+        y1.append(get_V_n_diagram(x, weight, altitude)+1)
+        y2.append(1-get_V_n_diagram(x, weight, altitude))
+        
+
+    plt.plot(x1, y1, 'black')
+    plt.plot(x1, y2, 'black')
+    plt.plot(x2, y3, 'black')
+    plt.plot(x2, y4, 'black')
+    plt.vlines(V_D, (1-get_V_n_diagram(V_D, weight, altitude)),(get_V_n_diagram(V_D, weight, altitude)+1),  color = 'black',)
+
+    return plt.show()
+
+plot_V_n_diagram('OEW', 'SL')
+print(1-get_V_n_diagram(V_D, 'OEW', 'SL'))
+
+
+                        
+
+                        
 
         
             
