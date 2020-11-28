@@ -377,8 +377,8 @@ class Wingbox:
 
         plt.show()
 
-    def drawCrosssection(self, posY, drawSidewallCenterlines=False, drawCentroid=False, drawNormalStress=False):
-        self.getGeneratedCrosssectionAtY(posY).drawCrosssection(drawSidewallCenterlines, drawCentroid, drawNormalStress, Mx=self.wingLoading.getInternalMoment(0)(posY), Mz=self.wingLoading.getInternalMoment(2)(posY), normalForce=self.wingLoading.getNormalForce()(posY))
+    def drawCrosssection(self, posY, drawSidewallCenterlines=False, drawCentroid=False, drawBendingStress=False):
+        self.getGeneratedCrosssectionAtY(posY).drawCrosssection(drawSidewallCenterlines, drawCentroid, drawBendingStress, Mx=self.wingLoading.getInternalMoment(0)(posY), Mz=self.wingLoading.getInternalMoment(2)(posY))
 
     def drawInertias(self):
         inertiaNames = [r"$I_{xx}$", r"$I_{zz}$", r"$I_{xz}$", "$J$"]
@@ -428,7 +428,8 @@ class Wingbox:
 
     def drawStructuralMassDistribution(self):
         plt.title("Material Mass Distribution")
-        plt.plot(self.crossectionYLocations, [self.getStructuralMassDistribution()(i) for i in self.crossectionYLocations])
+        structMassDistr = self.getStructuralMassDistribution()
+        plt.plot(self.crossectionYLocations, [structMassDistr(i) for i in self.crossectionYLocations])
         plt.xlabel('semi-span [m]')
         plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
 
@@ -436,7 +437,8 @@ class Wingbox:
 
     def drawFuelMassDistribution(self):
         plt.title("Fuel Mass Distribution")
-        plt.plot(self.crossectionYLocations, [self.getFuelMassDistribution()(i) for i in self.crossectionYLocations])
+        fuelMassDistr = self.getFuelMassDistribution()
+        plt.plot(self.crossectionYLocations, [fuelMassDistr(i) for i in self.crossectionYLocations])
 
         plt.xlabel('semi-span [m]')
         plt.ylabel(ylabel=r'mass [$\frac{kg}{m}$]')
