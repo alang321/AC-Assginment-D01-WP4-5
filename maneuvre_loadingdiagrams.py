@@ -402,12 +402,8 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
         worksheet.write("G"+str(i),h_dic[str(list(weights_altitudes.values())[a][0])])
         worksheet.write("I"+str(i),str(fuel_weights[str(list(weights_altitudes.keys())[a])]))
         worksheet.write("H"+str(i),str(loads[list(speeds_dic.keys())[i-worksheet_key]]))
-
-
-
-
-
-       
+        
+        
     worksheet_key += 5
     
 
