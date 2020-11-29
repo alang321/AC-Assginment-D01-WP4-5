@@ -15,11 +15,6 @@ def getWingLoading(velocity, altitude, weight, loadFactor, engineThrustFactor, f
     S = AircraftProperties.Planform["surface area"]
     cL = (weight * loadFactor * SF) / (1 / 2 * rho * (velocity**2) * S)
     forces = AerodynamicLoading.getNormalTangentialMomentAOA(cL, 0.375, velocity, altitude)
-    # forces = [0, 0, 0]
-    # for i in range(3):
-    #     x = lambda y: forces_no_sf[i](y) * SF
-    #     forces[i] = x
-    #aoa = forces[3]
     aoa = 0
 
     thrust = AircraftProperties.Engine["thrust"] * 1000 * engineThrustFactor
@@ -36,7 +31,7 @@ def getWingLoading(velocity, altitude, weight, loadFactor, engineThrustFactor, f
     else:
         tangential = lambda y: forces[1](y) - (fuelMassDistribution(y) * fuelMassFactor + structuralMassDistribution(y)) * np.sin(aoa) * 9.80665 * loadFactor
 
-    wingloading = WingLoads([engineRotated], [tangential, None, normal], [None, forces[2], None])
+    wingloading = WingLoads([engine], [tangential, None, normal], [None, forces[2], None])
 
     return wingloading, aoa
 
@@ -115,7 +110,7 @@ def checkWingBox(loadingCases, wingbox):
             wingbox.wingLoading = loading[0]
 
             # plot loading cases
-            # plotWingLoading(loading[0])
+            plotWingLoading(loading[0])
 
             #check normal stress
             max, min = wingbox.getMaximumMinimumNormalStress()
@@ -147,34 +142,38 @@ altitude = 0
 loadFactor1 = 2.5
 fuelFactor = 0.0
 
-loadFactor2 = -1.0
+loadFactor2 = -1
+
+thrustlevels = [0.0, 1.0]
 
 loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitude, loadFactor2, fuelFactor]]
 
 #wingbox definition start
 
-scale = 5 # variable
+scale = 4 # variable
 
-stringerSize = 1000 / scale # 1000, 20x20mm, 1.5mm thick
+stringerSize = 1000 / scale # 1000, 20x20mm, 2mm thick   * scale
 stringerType = StringerType(
-    [[0, 0], [0, -1.5 / stringerSize], [18.5 / stringerSize, -1.5 / stringerSize], [18.5 / stringerSize, -20 / stringerSize], [20 / stringerSize, -20 / stringerSize],
+    [[0, 0], [0, -2 / stringerSize], [18 / stringerSize, -2 / stringerSize], [18 / stringerSize, -20 / stringerSize], [20 / stringerSize, -20 / stringerSize],
      [20 / stringerSize, 0]], [[0, 0], [20 / stringerSize, 0]])
 
-sectionEnds = [5, 10.02, 15, 20, 30] # variable
 
 outerSparLocations = [0.15, 0.6] # variable
 
+sectionEnds =               [2.5,   5,      8,      11,     15,     19.5,     24,   30] # m
 #per section
-extraSpars = [1, 1, 1, 0, 0] # variable
-sparThicknesses = [0.015, 0.015, 0.015, 0.01, 0.01]  # variable
-flangeThicknessesTop = [0.015, 0.01, 0.01, 0.01, 0.01] # variable
-flangeThicknessesBottom = [0.015, 0.01, 0.01, 0.01, 0.01] # variable
-stringersTop = [35, 30, 15, 10, 5] # variable
-stringersBottom = [25, 20, 10, 5, 5] # variable
+extraSpars =                [0,     0,      0,      0,      0,      0,      0,      0] # m
+sparThicknesses =           [0.014, 0.013,  0.011,  0.009,  0.010,  0.008,   0.007,  0.005]  # m
+flangeThicknessesTop =      [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
+flangeThicknessesBottom =   [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
+stringersTop =              [34,    32,     30,     17,     14,     5,      2,      1] # m
+stringersBottom =           [25,    22,     20,     13,     9,      3,      2,      1] # m
 
 wingboxInputs = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=stringerType, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom)
 
+
 wingbox = Wingbox(ribLocations=sectionEnds, spars=wingboxInputs[2], stringersTop=wingboxInputs[0], stringersBottom=wingboxInputs[1], sparFlangeConnectionStringerShape=stringerType, flangeThicknesses=[wingboxInputs[4], wingboxInputs[5]], crosssectionAmount=200)
+
 
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
