@@ -301,7 +301,7 @@ class Wingbox:
 
         return interp1d(yList, theta, kind='cubic')
 
-    def getTwist(self, MyAtYFunction, yPos, fidelity=integrationFidelity, limit=integrationLimit):
+    def getTwist(self, yPos, fidelity=integrationFidelity, limit=integrationLimit):
         MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
         dthetaoverdy = []

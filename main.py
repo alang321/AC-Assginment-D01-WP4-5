@@ -10,20 +10,22 @@ from WingLoads import PointForce
 
 def getWingLoading(velocity, altitude, weight, loadFactor, engineThrustFactor, fuelMassDistribution=lambda y: 0, structuralMassDistribution=lambda y: 0, fuelMassFactor=1.0, neglectTangential=True):
     temp, p, rho = AerodynamicLoading.getISAParameters(altitude)
+    SF = AircraftProperties.Safety["ExternalLoadSF"]
 
     S = AircraftProperties.Planform["surface area"]
-    cL = (weight * loadFactor) / (1 / 2 * rho * (velocity**2) * S)
+    cL = (weight * loadFactor * SF) / (1 / 2 * rho * (velocity**2) * S)
     forces = AerodynamicLoading.getNormalTangentialMomentAOA(cL, 0.375, velocity, altitude)
-    SF = AircraftProperties.Safety["ExternalLoadSF"]
-    for i in range(3):
-        forces[i] = lambda y: forces[i](y) * SF
+    # forces = [0, 0, 0]
+    # for i in range(3):
+    #     x = lambda y: forces_no_sf[i](y) * SF
+    #     forces[i] = x
     #aoa = forces[3]
     aoa = 0
 
     thrust = AircraftProperties.Engine["thrust"] * 1000 * engineThrustFactor
 
     # 7.369915250148878 is the chord at 10.02
-    engine = PointForce([-7.369915250148878 * 0.375, 10.02, -1], [-thrust * SF, 0, -AircraftProperties.Engine["weight"]*loadFactor*SF], "Engine")
+    engine = PointForce([-7.369915250148878 * 0.375, 10.02, -1], [-thrust, 0, -AircraftProperties.Engine["weight"]*loadFactor], "Engine")
     engineRotated = engine.getRotatedVectorAroundAxis(-aoa, [0, 1, 0])
     #add fuel and structural weight
     normal = lambda y: forces[0](y) - (fuelMassDistribution(y) * fuelMassFactor + structuralMassDistribution(y)) * np.cos(aoa) * 9.80665 * loadFactor
@@ -112,8 +114,8 @@ def checkWingBox(loadingCases, wingbox):
             loading = getWingLoading(velocity=wingLoadingCase1[0], altitude=wingLoadingCase1[2], weight=wingLoadingCase1[1], loadFactor=wingLoadingCase1[3], engineThrustFactor=i, fuelMassDistribution=fuelmassdistr, structuralMassDistribution=structmassdistr, fuelMassFactor=wingLoadingCase1[4], neglectTangential=True)
             wingbox.wingLoading = loading[0]
 
-            #plot loading cases
-            #plotWingLoading(loading[0])
+            # plot loading cases
+            # plotWingLoading(loading[0])
 
             #check normal stress
             max, min = wingbox.getMaximumMinimumNormalStress()
@@ -134,8 +136,8 @@ def checkWingBox(loadingCases, wingbox):
             twist = wingbox.getTwist(semispan)
             print("Twist:", np.rad2deg(twist))
             if abs(twist) > maxTwistDelfection:
-                print("Exceeded Twist Deflection Limit of", np.rad2deg(maxVerticalDeflection), "deg. Deflection is:", np.rad2deg(deflection), "deg.")
-                wingbox.drawTwist(wingbox.getTwistFunction())
+                print("Exceeded Twist Deflection Limit of", np.rad2deg(maxTwistDelfection), "deg. Deflection is:", np.rad2deg(twist), "deg.")
+                wingbox.drawTwist(wingbox.getTwistFunction(), degrees=True)
                 return False
     return True
 
@@ -151,7 +153,7 @@ loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitud
 
 #wingbox definition start
 
-scale = 2 # variable
+scale = 5 # variable
 
 stringerSize = 1000 / scale # 1000, 20x20mm, 1.5mm thick
 stringerType = StringerType(
@@ -164,18 +166,18 @@ outerSparLocations = [0.15, 0.6] # variable
 
 #per section
 extraSpars = [1, 1, 1, 0, 0] # variable
-sparThicknesses = [0.01, 0.001, 0.01, 0.01, 0.01]  # variable
-flangeThicknessesTop = [0.01, 0.01, 0.01, 0.01, 0.01] # variable
-flangeThicknessesBottom = [0.01, 0.01, 0.01, 0.01, 0.01] # variable
-stringersTop = [35, 30, 25, 15, 10] # variable
-stringersBottom = [25, 15, 10, 5, 5] # variable
+sparThicknesses = [0.015, 0.015, 0.015, 0.01, 0.01]  # variable
+flangeThicknessesTop = [0.015, 0.01, 0.01, 0.01, 0.01] # variable
+flangeThicknessesBottom = [0.015, 0.01, 0.01, 0.01, 0.01] # variable
+stringersTop = [35, 30, 15, 10, 5] # variable
+stringersBottom = [25, 20, 10, 5, 5] # variable
 
 wingboxInputs = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=stringerType, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom)
 
 wingbox = Wingbox(ribLocations=sectionEnds, spars=wingboxInputs[2], stringersTop=wingboxInputs[0], stringersBottom=wingboxInputs[1], sparFlangeConnectionStringerShape=stringerType, flangeThicknesses=[wingboxInputs[4], wingboxInputs[5]], crosssectionAmount=200)
 
-#draw wingbox
-#wingbox.draw(drawBottomStringers=False)
+# draw wingbox
+wingbox.draw(drawBottomStringers=False)
 wingbox.drawCrosssection(2.5, drawCentroid=True, drawSidewallCenterlines=True)
 #wingbox.drawInertias()
 
@@ -184,4 +186,5 @@ if checkWingBox(loadCases, wingbox):
     print("Mass:", wingbox.totalMass, "kg")
 else:
     print("Doesnt work")
+    print("Mass:", wingbox.totalMass, "kg")
 

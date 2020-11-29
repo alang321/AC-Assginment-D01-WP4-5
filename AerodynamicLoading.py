@@ -77,7 +77,7 @@ def getNormalTangentialMomentAOA(cLd, xovercCentroid, v, altitude):
     Lift = lambda y: np.cos(aoa) * liftFreestream(y) + np.sin(aoa) * dragFreestream(y)
     Drag = lambda y: -liftFreestream(y) * np.sin(aoa) + np.cos(aoa) * dragFreestream(y)
 
-    return Lift, Drag, Moment, aoa
+    return [Lift, Drag, Moment, aoa]
 
 def getCoefficientDistribution(desiredCoefficient, index, machNumber, adjustedCoefficients):
     coeff0 = adjustedCoefficients[index][0]
