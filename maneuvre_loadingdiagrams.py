@@ -332,32 +332,39 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.xlabel('Velocity (m/s)')
     plt.ylabel('Load (n)')
     
-    #plt.text(V_A+5, -1.25, 'V_A') #add text to diagram 
-    plt.axvline(x=V_A, color = 'green', linestyle = '--')
+    
+    plt.axvline(x=V_S0, color = 'purple', linestyle = '--', label = "V_S0")
+    
     
     #plt.text(V_S1+5, -1.25, 'V_S1') #add text to diagram 
-    plt.axvline(x=V_S1, color = 'red', linestyle = '--')
+    plt.axvline(x=V_S1, color = 'red', linestyle = '--', label = "V_S1")
 
-    #plt.text(V_D+5, -1.25, 'V_D') #add text to diagram 
-    plt.axvline(x=V_D, color = 'blue', linestyle = '--')
+    #plt.text(V_A+5, -1.25, 'V_A') #add text to diagram 
+    plt.axvline(x=V_A, color = 'green', linestyle = '--', label = "V_A")
+    
 
     #plt.text(V_F+5, -1.25, 'V_C') #add text to diagram 
-    plt.axvline(x=V_F, color = 'orange', linestyle = '--')
+    plt.axvline(x=V_F, color = 'orange', linestyle = '--', label = "V_F")
     
-    plt.axvline(x=V_S0, color = 'purple', linestyle = '--')
-    
-    plt.axvline(x=V_C, color = 'yellow', linestyle = '--')
+    plt.axvline(x=V_C, color = 'aqua', linestyle = '--', label = "V_C")
 
     
-    plt.text(V_S1 * math.sqrt(2) - 70, 2, 'Flaps') #add text to diagram 
-    plt.text(V_S1 * math.sqrt(2) - 70, 1.5, 'Down') #add text to diagram 
+    #plt.text(V_D+5, -1.25, 'V_D') #add text to diagram 
+    plt.axvline(x=V_D, color = 'navy', linestyle = '--', label = "V_D")
+
+   
+    
+
+    
+    plt.text(V_S1 * math.sqrt(2) - 70, 2.1, 'Flaps') #add text to diagram 
+    plt.text(V_S1 * math.sqrt(2) - 70, 1.8, 'Down') #add text to diagram 
 
 
     plt.axhline(y=0, color = 'black', linestyle = ':')
     
-    plt.xticks(np.arange(0, 400, 50))  #fixing the x axis 
+    plt.xticks(np.arange(0, 450, 50))  #fixing the x axis 
     plt.ylim(-1.5, 3)
-    plt.xlim(0,350)
+    plt.xlim(0,450)
     
     plt.yticks(np.arange(-1.5, 3, 0.5))  #fixing the y axis 
 
@@ -376,8 +383,8 @@ def plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre diagram'):
     plt.plot(x2, y2, 'black')  #flaps down curve
     plt.plot(x3, -f(x3), 'black')
     
-    plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.5, hspace=0.5)
-    
+    leg = plt.legend();
+
     plt.show()
     
     ###---updating excel file---###
@@ -444,16 +451,8 @@ for i in range(len(V_all_list_sorted)):
         plot_maneuver(V_A, V_D, V_F, V_S0, V_S1, title = 'Manoeuvre envelope at LW with zero payload and FL310')
 
 
-            
-
-
-
 workbook.close() 
 
-
-
-
-    
-               
+     
                
 
