@@ -67,7 +67,7 @@ def getNormalTangentialMomentAOA(cLd, xovercCentroid, v, altitude):
     cdFreestream = getCoefficientDistribution(CDd, 1, machNumber, adjustedCoefficients)
     cm = getCoefficientDistribution(CMd, 2, machNumber, adjustedCoefficients)
     # for shit of moment equation see first line of https://brightspace.tudelft.nl/d2l/le/content/292972/viewContent/1906402/View
-    cmx = lambda y: cm(y) + (xovercCentroid - 0.25) * clFreestream(y)
+    cmx = lambda y: -(cm(y) - (xovercCentroid - 0.25) * clFreestream(y))
 
     liftFreestream = lambda y: clFreestream(y) * q * Chord(y)
     dragFreestream = lambda y: cdFreestream(y) * q * Chord(y)

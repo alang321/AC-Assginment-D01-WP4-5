@@ -112,16 +112,20 @@ class WingLoads:
         if self.__internalMoments[axis] is not None:
             return self.__internalMoments[axis]
 
-        if self.__internalShear[axis] is None:
-            self.getShearForce(axis)
+        shearIndeces = [2, 1, 0]
+
+        if self.__internalShear[shearIndeces[axis]] is None:
+            self.getShearForce(shearIndeces[axis])
 
         yList = np.linspace(self.limits[0], self.limits[1], fidelity, endpoint=True)
 
         internalMoment = []
 
+
+
         for yVal in yList:
             # contribtuion from shear force
-            i = quad(self.__internalShear[axis], yVal, self.limits[1], limit=limit)
+            i = quad(self.__internalShear[shearIndeces[axis]], yVal, self.limits[1], limit=limit)
             momentAtPoint = -i[0]
             # contribution from distributed moment
             j = quad(self.distributedMoments[axis], yVal, self.limits[1], limit=limit)
