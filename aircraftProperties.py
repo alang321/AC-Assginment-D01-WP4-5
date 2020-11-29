@@ -126,4 +126,7 @@ class AircraftProperties:
         "ultimate strength": 3.10 * 10**8, #Pa
         "shear strength": 2.07 * 10**8, #Pa
     }
+    Safety = {
+        "ExternalLoadSF": 1.5
+    }
 

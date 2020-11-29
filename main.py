@@ -14,16 +14,17 @@ def getWingLoading(velocity, altitude, weight, loadFactor, engineThrustFactor, f
     S = AircraftProperties.Planform["surface area"]
     cL = (weight * loadFactor) / (1 / 2 * rho * (velocity**2) * S)
     forces = AerodynamicLoading.getNormalTangentialMomentAOA(cL, 0.375, velocity, altitude)
-
+    SF = AircraftProperties.Safety["ExternalLoadSF"]
+    for i in range(3):
+        forces[i] = lambda y: forces[i](y) * SF
     #aoa = forces[3]
     aoa = 0
 
     thrust = AircraftProperties.Engine["thrust"] * 1000 * engineThrustFactor
 
     # 7.369915250148878 is the chord at 10.02
-    engine = PointForce([-7.369915250148878 * 0.375, 10.02, -1], [-thrust, 0, -AircraftProperties.Engine["weight"]*loadFactor], "Engine")
+    engine = PointForce([-7.369915250148878 * 0.375, 10.02, -1], [-thrust * SF, 0, -AircraftProperties.Engine["weight"]*loadFactor*SF], "Engine")
     engineRotated = engine.getRotatedVectorAroundAxis(-aoa, [0, 1, 0])
-
     #add fuel and structural weight
     normal = lambda y: forces[0](y) - (fuelMassDistribution(y) * fuelMassFactor + structuralMassDistribution(y)) * np.cos(aoa) * 9.80665 * loadFactor
 
