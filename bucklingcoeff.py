@@ -25,3 +25,6 @@ compressionfunc = sp.interpolate.interp1d(abcompression, coeffcompression, kind=
 
 def getbucklingcoeffshear(ab):
     return shearfunc(ab)
+
+def getbucklingcoeffcompression(ab):
+    return compressionfunc(ab)
