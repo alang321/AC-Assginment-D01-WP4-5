@@ -125,6 +125,7 @@ class AircraftProperties:
         "yield strength": 2.76 * 10**8, #Pa
         "ultimate strength": 3.10 * 10**8, #Pa
         "shear strength": 2.07 * 10**8, #Pa
+        "poisson's ratio": 0.33 
     }
     Safety = {
         "ExternalLoadSF": 1.5
