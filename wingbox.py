@@ -227,10 +227,9 @@ class Wingbox:
                                   flangeThicknesses=flangeThicknesses, stringersTop=stringers[0], stringersBottom=stringers[1], yLocation=posY)
 
     def __getLineIntersection(self, xList, yList, posY):
-        if xList[0] == xList[1]: # this happens if at the center line of the wing, ugly way to do it but it works so w/e
-            return xList[0]
-
         if yList[0] <= posY <= yList[1]:
+            if xList[0] == xList[1]: # this happens if at the center line of the wing, ugly way to do it but it works so w/e
+                return xList[0]
             k = (yList[0] - yList[1]) / (xList[0] - xList[1])
             d = yList[0] - k * xList[0]
 
@@ -284,36 +283,20 @@ class Wingbox:
     def getTwistFunction(self, fidelity=integrationFidelity, limit=integrationLimit):
         MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
-        dthetaoverdy = []
         theta = []
         yList = np.linspace(0, self.semispan, fidelity)
 
         for yVal in yList:
-            f = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
-            i = quad(f, 0, yVal, limit=limit)
-            dthetaoverdy.append(i[0] * -1)
-
-        dthethaoverdyfunc = interp1d(yList, dthetaoverdy, kind='cubic')
-
-        for yVal in np.linspace(0, self.semispan, fidelity):
+            dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
             i = quad(dthethaoverdyfunc, 0, yVal, limit=limit)
-            theta.append(i[0])
+            theta.append(i[0] * -1)
 
         return interp1d(yList, theta, kind='cubic')
 
-    def getTwist(self, yPos, fidelity=integrationFidelity, limit=integrationLimit):
+    def getTwist(self, yPos, limit=integrationLimit):
         MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
-        dthetaoverdy = []
-        yList = np.linspace(0, self.semispan, fidelity)
-
-        for yVal in yList:
-            f = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
-            i = quad(f, 0, yVal, limit=limit)
-            dthetaoverdy.append(i[0] * -1)
-
-        dthethaoverdyfunc = interp1d(yList, dthetaoverdy, kind='cubic')
-
+        dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
         i = quad(dthethaoverdyfunc, 0, yPos, limit=limit)
 
         return i[0]
@@ -331,6 +314,20 @@ class Wingbox:
                     min = [stress, crosssection, point]
 
         return max, min
+
+    def getMaximumTensileStressList(self):
+        maxNormalStressList = []
+
+        for crosssection in self.crosssecctions:
+            max = 0
+            for point in crosssection.outsidePolygon.coords:
+                stress = crosssection.getBendingStressAtPoint(self.wingLoading.getInternalMoment(0)(crosssection.yLocation), self.wingLoading.getInternalMoment(2)(crosssection.yLocation), point[0], point[1])
+                if stress > max:
+                    max = stress
+
+            maxNormalStressList.append(max)
+
+        return maxNormalStressList
 
     def getMaximumShearStressMagnitude(self):
         max = -1 # magnitude
@@ -401,6 +398,14 @@ class Wingbox:
 
         if axisSameScale:
             plt.gca().set_aspect('equal', adjustable='box')
+
+        plt.show()
+
+    def drawMaximumTensileStress(self):
+        plt.title("Maximum Normal Stress")
+        plt.plot(self.crossectionYLocations, self.getMaximumTensileStressList())
+        plt.xlabel('semi-span [m]')
+        plt.ylabel('stress [Pa]')
 
         plt.show()
 
