@@ -62,7 +62,7 @@ class WingLoads:
             pointMoments = force.getMomentsAroundPoint([0, y, 0])
             for i in range(3):
                 if abs(pointMoments[i]) > 0.1: # since rotating a point force often transforms 0 values to smth like e-16 (smth similar to floating point inacuracy happening), therefore moments smaller than 0.1 are discarded since their contribtuions are extremely small anyway (0.1Nm<<100KNm)
-                    moments[i].append([pointMoments[i], y, force.identifier])
+                    moments[i].append([-pointMoments[i], y, force.identifier])
 
         return moments
 

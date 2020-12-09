@@ -308,12 +308,12 @@ class WingboxCrossection:
         Q = 0
 
         outsideCut = self.outsidePolygon.getCutByY(self.centroid[1], getTop=True)
-        outsideCut.addToPlot(plt)
+        #outsideCut.addToPlot(plt)
         Q += abs(outsideCut.getCentroid()[1] - self.centroid[1]) * outsideCut.getArea()
 
         for i in self.insidePolygons:
             cut = i.getCutByY(self.centroid[1], getTop=True)
-            cut.addToPlot(plt)
+            #cut.addToPlot(plt)
             Q -= abs(cut.getCentroid()[1] - self.centroid[1]) * cut.getArea()
 
         if takeIntoAccountStringers:
@@ -321,21 +321,36 @@ class WingboxCrossection:
                 if i.getCentroid()[1] > self.centroid[1]:
                     Q -= abs(i.getCentroid()[1] - self.centroid[1]) * i.getArea()
 
-                    i.addToPlot(plt)
+                    #i.addToPlot(plt)
 
-        taoShear = (Vz * Q) / (self.ixx * self.sparThicknesses[0])
+        totalSparThickness = sum(self.sparThicknesses)
+
+        taoShear = (Vz * Q) / (self.ixx * totalSparThickness)
 
         qs = self.__getMulticellTorsion(internalTorque)
 
-        max = 0
-        for i in range(self.numSections):
-            taoTorque = abs(qs[i] / self.sparThicknesses[0])
-            candidate = taoShear + taoTorque
+        magnitude = -1
+
+        aftSparIndex = self.numSections - 1
+
+        # if torque is positive and shear is positive front spar
+        if internalTorque >= 0 and Vz >= 0:
+            magnitude = abs(taoShear) + abs(qs[0] / self.sparThicknesses[0])
+        # if torque is negative and shear is positive at aft spar
+        elif internalTorque <= 0 and Vz >= 0:
+            magnitude = abs(taoShear) + abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
+        # if torque is negative and shear is negative at front spar
+        elif internalTorque <= 0 and Vz <= 0:
+            magnitude = abs(taoShear) + abs(qs[0] / self.sparThicknesses[0])
+        # if torque is positive and shear is negative at aft spar
+        elif internalTorque >= 0 and Vz <= 0:
+            magnitude = abs(taoShear) + abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
 
 
-        plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
-        return taoTorque + taoShear
+        #plt.gca().set_aspect('equal', adjustable='box')
+        #plt.show()
+
+        return magnitude
 
     def getBendingStressAtPoint(self, Mx, Mz, x, z):
         return ((self.ixx * Mz - self.izx * Mx)/(self.ixx * self.izz - self.izx**2))*x + ((self.izz * Mx - self.izx * Mz)/(self.ixx * self.izz - self.izx**2))*z
