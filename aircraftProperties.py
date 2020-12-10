@@ -123,6 +123,8 @@ class AircraftProperties:
         "e modulus": 68.9 * 10**9,
         "density": 2700, #kg/m^3
         "yield strength": 2.76 * 10**8, #Pa
+        "edge crack strength": 3.27 * 10**8 #Pa
+        "center crack strength": 2.92 * 10**8 # Pa
         "ultimate strength": 3.10 * 10**8, #Pa
         "shear strength": 2.07 * 10**8, #Pa
         "poisson's ratio": 0.33 
