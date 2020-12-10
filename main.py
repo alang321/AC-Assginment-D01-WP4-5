@@ -13,8 +13,17 @@ def getWingLoading(velocity, altitude, weight, loadFactor, engineThrustFactor, f
     SF = AircraftProperties.Safety["ExternalLoadSF"]
 
     S = AircraftProperties.Planform["surface area"]
-    cL = (weight * loadFactor * SF) / (1 / 2 * rho * (velocity**2) * S)
-    forces = AerodynamicLoading.getNormalTangentialMomentAOA(cL, 0.375, velocity, altitude)
+
+    if loadFactor > 0:
+        cL = (weight * loadFactor * SF) / (1 / 2 * rho * (velocity**2) * S)
+        forces = AerodynamicLoading.getNormalTangentialMomentAOA(cL, 0.375, velocity, altitude)
+    else:
+        cL = (weight * loadFactor * -1 * SF) / (1 / 2 * rho * (velocity**2) * S)
+        invertedForces = AerodynamicLoading.getNormalTangentialMomentAOA(cL, 0.375, velocity, altitude)
+        forces = []
+        for i in range(3):
+            forces.append(lambda y: invertedForces[i](y) * -1)
+            forces.append(invertedForces[3] * -1)
     aoa = 0
 
     thrust = AircraftProperties.Engine["thrust"] * 1000 * engineThrustFactor
@@ -26,7 +35,6 @@ def getWingLoading(velocity, altitude, weight, loadFactor, engineThrustFactor, f
     normal = lambda y: forces[0](y) - (fuelMassDistribution(y) * fuelMassFactor + structuralMassDistribution(y)) * np.cos(aoa) * 9.80665 * loadFactor
 
     if neglectTangential:
-        engineRotated.forceVector[0] = 0
         tangential = lambda y: 0
     else:
         tangential = lambda y: forces[1](y) - (fuelMassDistribution(y) * fuelMassFactor + structuralMassDistribution(y)) * np.sin(aoa) * 9.80665 * loadFactor
@@ -37,26 +45,20 @@ def getWingLoading(velocity, altitude, weight, loadFactor, engineThrustFactor, f
 
 def plotWingLoading(loading):
     print("External Forces")
-    for axis in range(3):
-        loading.drawExternalForces(axis)
+    loading.drawExternalForces(2)
 
     print("External Moments")
-    for axis in range(3):
-        loading.drawExternalMoments(axis)
+    loading.drawExternalMoments(1)
 
     print("Shear Forces")
-    loading.drawShearForce(0)
     loading.drawShearForce(2)
 
-    print("Normal Force")
-    loading.drawNormalForce()
-
     print("Internal Moments")
-    for axis in range(3):
-        loading.drawInternalMoment(axis)
+    loading.drawInternalMoment(0)
+    loading.drawInternalMoment(1)
 
 # amount stringers top, amount stringers bottom, endpoint
-def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stringerType, outerSparLocations, extraSpars, sparThicknesses, flangeThicknessesTop, flangeThicknessesBottom):
+def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stringerType, sparCapSide, sparCapCenter, outerSparLocations, extraSpars, sparThicknesses, flangeThicknessesTop, flangeThicknessesBottom):
     #section starting y values
     sectionStartingLocations = [0]
     sectionStartingLocations.extend(sectionEndLocations)
@@ -71,13 +73,61 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
     bottomStringersOutput = []
     #top stringers
     for sectionIndex in range(len(sectionEndLocations)):
-        for stringerIndex in range(stringersTop[sectionIndex]):
-            topStringersOutput.append([sectionStartingLocations[sectionIndex], sectionEndLocations[sectionIndex], outerSparLocations[0] + sparDistance / (stringersTop[sectionIndex] + 1) * (stringerIndex + 1), stringerTypeTop])
+        cells = extraSpars[sectionIndex] + 1
+
+        extra = stringersTop[sectionIndex] % cells
+
+        stringersPerCell = []
+        for i in range(cells):
+            stringersPerCell.append(stringersTop[sectionIndex]//cells)
+
+            if i < extra:
+                stringersPerCell[-1] += 1
+
+        for i in range(cells):
+            chordAtMedian = 9.77 * (1 + ((2 * (0.2996 - 1)) / 57.1362641792155) * (sectionStartingLocations[sectionIndex] + sectionEndLocations[sectionIndex])/2)
+
+            frontlength = sparCapCenter.baseLength
+            aftlength = sparCapCenter.baseLength
+            if i == 0:
+                frontlength = sparCapSide.baseLength
+            if i == cells - 1:
+                aftlength = sparCapSide.baseLength
+
+            start = outerSparLocations[0] + (sparDistance/(extraSpars[sectionIndex] + 1)) * i + frontlength/chordAtMedian
+            end = outerSparLocations[0] + (sparDistance/(extraSpars[sectionIndex] + 1)) * (i + 1) - aftlength/chordAtMedian
+
+            for stringerIndex in range(stringersPerCell[i]):
+                topStringersOutput.append([sectionStartingLocations[sectionIndex], sectionEndLocations[sectionIndex], start + (end - start)/(stringersPerCell[i] + 1) * (stringerIndex + 1), stringerTypeTop])
     #bottom stringers
     for sectionIndex in range(len(sectionEndLocations)):
-        for stringerIndex in range(stringersBottom[sectionIndex]):
-            bottomStringersOutput.append([sectionStartingLocations[sectionIndex], sectionEndLocations[sectionIndex], outerSparLocations[0] + sparDistance / (stringersBottom[sectionIndex] + 1) * (stringerIndex + 1), stringerTypeBottom])
+        cells = extraSpars[sectionIndex] + 1
 
+        extra = stringersBottom[sectionIndex] % cells
+
+        stringersPerCell = []
+        for i in range(cells):
+            stringersPerCell.append(stringersBottom[sectionIndex] // cells)
+
+            if i < extra:
+                stringersPerCell[-1] += 1
+
+        for i in range(cells):
+            chordAtMedian = 9.77 * (1 + ((2 * (0.2996 - 1)) / 57.1362641792155) * (
+                        sectionStartingLocations[sectionIndex] + sectionEndLocations[sectionIndex]) / 2)
+
+            frontlength = sparCapCenter.baseLength
+            aftlength = sparCapCenter.baseLength
+            if i == 0:
+                frontlength = sparCapSide.baseLength
+            if i == cells - 1:
+                aftlength = sparCapSide.baseLength
+
+            start = outerSparLocations[0] + (sparDistance / (extraSpars[sectionIndex] + 1)) * i + frontlength / chordAtMedian
+            end = outerSparLocations[0] + (sparDistance / (extraSpars[sectionIndex] + 1)) * (i + 1) - aftlength / chordAtMedian
+
+            for stringerIndex in range(stringersPerCell[i]):
+                bottomStringersOutput.append([sectionStartingLocations[sectionIndex], sectionEndLocations[sectionIndex],start + (end - start) / (stringersPerCell[i] + 1) * (stringerIndex + 1), stringerTypeBottom])
     #spars
     sparThicknessFunc = sp.interpolate.interp1d(sectionEndLocations, sparThicknesses, kind='next', fill_value="extrapolate")
     sparsOutput = []
@@ -90,10 +140,12 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
     flangeThicknessTopFunc = sp.interpolate.interp1d(sectionEndLocations, flangeThicknessesTop, kind='next', fill_value="extrapolate")
     flangeThicknessBottomFunc = sp.interpolate.interp1d(sectionEndLocations, flangeThicknessesBottom, kind='next', fill_value="extrapolate")
 
-    return topStringersOutput, bottomStringersOutput, sparsOutput, sparThicknessFunc, flangeThicknessTopFunc, flangeThicknessBottomFunc
+    return Wingbox(ribLocations=[0, *sectionEndLocations], spars=sparsOutput, stringersTop=topStringersOutput, stringersBottom=bottomStringersOutput, sparCapSide=sparCapSide, sparCapCenter=sparCapCenter, flangeThicknesses=[flangeThicknessTopFunc, flangeThicknessBottomFunc], crosssectionAmount=200)
 
 def checkWingBox(loadingCases, wingbox):
     yieldStrength = AircraftProperties.WingboxMaterial["yield strength"]
+    edgecrackStrength = AircraftProperties.WingboxMaterial["edge crack strength"]
+    centercrackStrength = AircraftProperties.WingboxMaterial["center crack strength"]
 
     maxTwistDelfection = np.deg2rad(10)
     maxVerticalDeflection = AircraftProperties.Planform["span"]*0.15
@@ -102,7 +154,7 @@ def checkWingBox(loadingCases, wingbox):
 
     fuelmassdistr = wingbox.getFuelMassDistribution()
     structmassdistr = wingbox.getStructuralMassDistribution()
-    thrustlevels = [0.0, 1.0]
+    thrustlevels = [1.0]
 
     for wingLoadingCase1 in loadingCases:
         for i in thrustlevels:
@@ -112,6 +164,12 @@ def checkWingBox(loadingCases, wingbox):
             # plot loading cases
             plotWingLoading(loading[0])
 
+            wingbox.checkWebShearBuckling()
+
+            wingbox.drawMaximumTensileStress()
+
+            wingbox.drawMaxShearStress()
+
             #check normal stress
             max, min = wingbox.getMaximumMinimumNormalStress()
             if abs(max[0]) > yieldStrength or abs(min[0]) > yieldStrength:
@@ -119,6 +177,14 @@ def checkWingBox(loadingCases, wingbox):
                 wingbox.drawCrosssection(max[1].yLocation, drawBendingStress=True)
                 print("Min stress", min[0], "at y:", min[1].yLocation, "at point:", min[2])
                 wingbox.drawCrosssection(min[1].yLocation, drawBendingStress=True)
+                return False
+
+            #check with cracks
+            if abs(max[0]) > edgecrackStrength or abs(min[0]) > edgecrackStrength:
+                print("Edge cracks will not lead to failure.")
+                return False
+            if abs(max[0]) > centercrackStrength or abs(min[0]) > centercrackStrength:
+                print("Center cracks will not lead to failure.")
                 return False
 
             deflection = wingbox.getVerticalDeflectionAtY(semispan)
@@ -150,34 +216,38 @@ loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitud
 
 #wingbox definition start
 
-scale = 4 # variable
+scale = 8
+sideCap = StringerType([[0, 0], [0, -2], [18, -2], [18, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]])
+sideCap = sideCap.getScaledStringer(1/1000 * scale)
 
-stringerSize = 1000 / scale # 1000, 20x20mm, 2mm thick   * scale
-stringerType = StringerType(
-    [[0, 0], [0, -2 / stringerSize], [18 / stringerSize, -2 / stringerSize], [18 / stringerSize, -20 / stringerSize], [20 / stringerSize, -20 / stringerSize],
-     [20 / stringerSize, 0]], [[0, 0], [20 / stringerSize, 0]])
+scale = 8
+centerCap = StringerType([[0, 0], [0, -1], [19, -1], [19, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]])
+centerCap = centerCap.getScaledStringer(1/1000 * scale)
+
+scale = 4
+extrudedt = StringerType([[0, 0], [0, -1.5], [8.5, -1.5], [8.5, -18.5], [3, -18.5], [3, -20], [15.5, -20], [15.5, -18.5], [10, -18.5], [10, -1.5], [18.5, -1.5], [18.5, 0]],       [[0, 0], [18.5, 0]])
+extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 
 outerSparLocations = [0.15, 0.6] # variable
 
 sectionEnds =               [2.5,   5,      8,      11,     15,     19.5,     24,   30] # m
 #per section
-extraSpars =                [0,     0,      0,      0,      0,      0,      0,      0] # m
+extraSpars =                [1,     1,      0,      0,      0,      0,      0,      0] # m
 sparThicknesses =           [0.014, 0.013,  0.011,  0.009,  0.010,  0.008,   0.007,  0.005]  # m
 flangeThicknessesTop =      [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
 flangeThicknessesBottom =   [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
-stringersTop =              [34,    32,     30,     17,     14,     5,      2,      1] # m
-stringersBottom =           [25,    22,     20,     13,     9,      3,      2,      1] # m
-
-wingboxInputs = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=stringerType, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom)
+stringersTop =              [35,    33,     31,     18,     15,     6,      3,      2] # m
+stringersBottom =           [26,    23,     21,     14,     10,     4,      3,      2] # m
 
 
-wingbox = Wingbox(ribLocations=sectionEnds, spars=wingboxInputs[2], stringersTop=wingboxInputs[0], stringersBottom=wingboxInputs[1], sparFlangeConnectionStringerShape=stringerType, flangeThicknesses=[wingboxInputs[4], wingboxInputs[5]], crosssectionAmount=200)
+wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom)
 
 
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
 wingbox.drawCrosssection(2.5, drawCentroid=True, drawSidewallCenterlines=True)
+wingbox.getGeneratedCrosssectionAtY(2.5).getMaxShearStress(0, 0)
 #wingbox.drawInertias()
 
 if checkWingBox(loadCases, wingbox):

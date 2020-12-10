@@ -12,6 +12,7 @@ class Wingbox:
     __fuelDensity = AircraftProperties.Fuel["fuel density"]
     __density = AircraftProperties.WingboxMaterial["density"]
     __shear = AircraftProperties.WingboxMaterial["shear strength"]
+    __poissons = AircraftProperties.WingboxMaterial["poisson's ratio"]
 
     integrationLimit = 50
     integrationFidelity = 20
@@ -19,7 +20,7 @@ class Wingbox:
     #spar flange connection stringer should be the name basically with the orientation such aconnection stringer would have in the top right
     #stringers should be alist of lists = [[absstarty, absendy, relposx, stringerShape], [......], ...]
     #flange thickness should be list = [[[topt, bott], endposY], [[topt, bott]], endposY], .....], so first index starts at wingroot
-    def __init__(self, ribLocations, spars, stringersTop, stringersBottom, sparFlangeConnectionStringerShape, flangeThicknesses, crosssectionAmount, wingLoading=WingLoads([], [None, None, None], [None, None, None])):
+    def __init__(self, ribLocations, spars, stringersTop, stringersBottom, sparCapSide, sparCapCenter, flangeThicknesses, crosssectionAmount, wingLoading=WingLoads([], [None, None, None], [None, None, None])):
         self.span = AircraftProperties.Planform["span"]
         self.semispan = self.span/2
         self.taperratio = AircraftProperties.Planform["taper ratio"]
@@ -50,7 +51,8 @@ class Wingbox:
         self.stringersTop = stringersTop
         self.stringersBottom = stringersBottom
         self.stringers = [stringersTop, stringersBottom]
-        self.connectionStringers = self.__generateSparFlangeConnectionStringers(sparFlangeConnectionStringerShape)
+        self.sparCaps = self.__placeSparCaps(sparCapSide, sparCapCenter)
+        self.sideSparCaps = sparCapSide
 
         self.stringerLines = []
         for stringerList in self.stringers:
@@ -62,7 +64,7 @@ class Wingbox:
                 stringerLineList.append([xVals, yVals, stringer[3]])
             self.stringerLines.append(stringerLineList)
 
-        for index, stringerList in enumerate(self.connectionStringers):
+        for index, stringerList in enumerate(self.sparCaps):
             for stringer in stringerList:
                 xVals = [stringer[2], stringer[3]]
                 yVals = [stringer[0], stringer[1]]
@@ -100,6 +102,61 @@ class Wingbox:
 
         self.wingLoading = wingLoading
 
+    def checkWebShearBuckling(self):
+
+        # for loop for each cell
+        # if no stringer between two outhermost with clamped edges
+        # if 1 stringer between stringer and spar cap with 1 clamped side
+        # otherwise only check between stringer 0 and 1, this obviously assumes equal spacing
+
+        shearList = self.getMaximumShearStressList()
+
+        maxShearPerSection = [[0] * len(self.ribLocations - 1), [0] * len(self.ribLocations - 1)] # list of lists [front, aft]
+
+        aPerSection = []
+        bPerSection = [[0] * len(self.ribLocations - 1), [0] * len(self.ribLocations - 1)]
+
+        sidewallIndices = [[0, 1], [2, 3]]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = secIndex
+
+            #a per section
+            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex] + 1) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
+
+            #max shear magnitude
+            for i in range(2):
+                #shear
+                if shearList[i][index] > maxShearPerSection[i][sectionIndex]:
+                    maxShearPerSection[i][sectionIndex] = shearList[i][index]
+
+                # b, spar length at each end
+                crossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex + 1])
+                #+ sidewallIndices[i]
+                #bPerSection[i].append()
+
+        # a per section
+        # b per section
+
+        for sectionIndex in range(len(self.ribLocations)-1):
+
+            startCrossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex])
+
+
+
+            a = self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]
+            #todo: euclidian distance
+
+            #shearList(startCrossection.yLocation)
+
+            # check front spar
+            # check aft spar
+
+
+
     def __getInternalAndMaterialVolume(self):
         internal = 0
         material = 0
@@ -111,6 +168,8 @@ class Wingbox:
 
         internal *= ydist
         material *= ydist
+
+        #todo : add rib volume
 
         return internal, material
 
@@ -162,13 +221,17 @@ class Wingbox:
 
         return [yLocation, ixx], [yLocation, izz], [yLocation, ixz], [yLocation, j]
 
-    def __generateSparFlangeConnectionStringers(self, stringerType):
+    def __placeSparCaps(self, sparCapsSide, sparCapCenter):
         stringersTop = []
         stringersBottom = []
 
-        leftSideStringer = [stringerType, stringerType.getMirrorStringerX()]
-        rightSideStringer = [stringerType.getMirrorStringerZ(), stringerType.getMirrorStringerZ().getMirrorStringerX()]
-        stringerPerSide = [leftSideStringer, rightSideStringer]
+        leftSideCap = [sparCapsSide, sparCapsSide.getMirrorStringerX()]
+        rightSideCap = [sparCapsSide.getMirrorStringerZ(), sparCapsSide.getMirrorStringerZ().getMirrorStringerX()]
+        sideCaps = [leftSideCap, rightSideCap]
+
+        leftCenterCap = [sparCapCenter, sparCapCenter.getMirrorStringerX()]
+        rightCenterCap = [sparCapCenter.getMirrorStringerZ(), sparCapCenter.getMirrorStringerZ().getMirrorStringerX()]
+        centerCaps = [leftCenterCap, rightCenterCap]
 
         directions = [-1, 1]
 
@@ -176,16 +239,22 @@ class Wingbox:
             sides = [0, 1]
             factor = 0.5
 
+            lengthOffset = sparCapCenter.baseLength / 2
+            stringerPerSide = centerCaps
             if index == 0: # if left spar
                 factor = 1
                 sides = [1]
+                lengthOffset = sparCapsSide.baseLength/2
+                stringerPerSide = sideCaps
             elif index == 1: # if right spar
                 factor = 1
                 sides = [0]
+                lengthOffset = sparCapsSide.baseLength/2
+                stringerPerSide = sideCaps
 
             for side in sides:
-                startx = sparLine[0][0] + self.spars[index][3](sparLine[1][0]) * directions[side] * factor + stringerType.baseLength/2 * directions[side]
-                endx = sparLine[0][1] + self.spars[index][3](sparLine[1][1]) * directions[side] * factor + stringerType.baseLength/2 * directions[side]
+                startx = sparLine[0][0] + self.spars[index][3](sparLine[1][0]) * directions[side] * factor + lengthOffset * directions[side]
+                endx = sparLine[0][1] + self.spars[index][3](sparLine[1][1]) * directions[side] * factor + lengthOffset * directions[side]
 
                 stringersTop.append([sparLine[1][0], sparLine[1][1], startx, endx, stringerPerSide[side][0]])
                 stringersBottom.append([sparLine[1][0], sparLine[1][1], startx, endx, stringerPerSide[side][1]])
@@ -227,10 +296,9 @@ class Wingbox:
                                   flangeThicknesses=flangeThicknesses, stringersTop=stringers[0], stringersBottom=stringers[1], yLocation=posY)
 
     def __getLineIntersection(self, xList, yList, posY):
-        if xList[0] == xList[1]: # this happens if at the center line of the wing, ugly way to do it but it works so w/e
-            return xList[0]
-
         if yList[0] <= posY <= yList[1]:
+            if xList[0] == xList[1]: # this happens if at the center line of the wing, ugly way to do it but it works so w/e
+                return xList[0]
             k = (yList[0] - yList[1]) / (xList[0] - xList[1])
             d = yList[0] - k * xList[0]
 
@@ -284,36 +352,20 @@ class Wingbox:
     def getTwistFunction(self, fidelity=integrationFidelity, limit=integrationLimit):
         MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
-        dthetaoverdy = []
         theta = []
         yList = np.linspace(0, self.semispan, fidelity)
 
         for yVal in yList:
-            f = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
-            i = quad(f, 0, yVal, limit=limit)
-            dthetaoverdy.append(i[0] * -1)
-
-        dthethaoverdyfunc = interp1d(yList, dthetaoverdy, kind='cubic')
-
-        for yVal in np.linspace(0, self.semispan, fidelity):
+            dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
             i = quad(dthethaoverdyfunc, 0, yVal, limit=limit)
-            theta.append(i[0])
+            theta.append(i[0] * -1)
 
         return interp1d(yList, theta, kind='cubic')
 
-    def getTwist(self, yPos, fidelity=integrationFidelity, limit=integrationLimit):
+    def getTwist(self, yPos, limit=integrationLimit):
         MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
-        dthetaoverdy = []
-        yList = np.linspace(0, self.semispan, fidelity)
-
-        for yVal in yList:
-            f = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
-            i = quad(f, 0, yVal, limit=limit)
-            dthetaoverdy.append(i[0] * -1)
-
-        dthethaoverdyfunc = interp1d(yList, dthetaoverdy, kind='cubic')
-
+        dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
         i = quad(dthethaoverdyfunc, 0, yPos, limit=limit)
 
         return i[0]
@@ -324,7 +376,7 @@ class Wingbox:
 
         for crosssection in self.crosssecctions:
             for point in crosssection.outsidePolygon.coords:
-                stress = crosssection.getBendingStressAtPoint(self.wingLoading.getInternalMoment(0)(crosssection.yLocation), self.wingLoading.getInternalMoment(2)(crosssection.yLocation), point[0], point[1])
+                stress = crosssection.getBendingStressAtPoint(self.wingLoading.getInternalMoment(0)(crosssection.yLocation), 0, point[0], point[1])
                 if stress > max[0]:
                     max = [stress, crosssection, point]
                 elif stress < min[0]:
@@ -332,17 +384,31 @@ class Wingbox:
 
         return max, min
 
-    def getMaximumShearStressMagnitude(self):
-        max = -1 # magnitude
-        yLoc = -1
+    def getMaximumTensileStressList(self):
+        maxNormalStressList = []
+
+        for crosssection in self.crosssecctions:
+            max = 0
+            for point in crosssection.outsidePolygon.coords:
+                stress = crosssection.getBendingStressAtPoint(self.wingLoading.getInternalMoment(0)(crosssection.yLocation), 0, point[0], point[1])
+                if stress > max:
+                    max = stress
+
+            maxNormalStressList.append(max)
+
+        return maxNormalStressList
+
+    def getMaximumShearStressList(self):
+        front = []
+        aft = []
 
         for crosssection in self.crosssecctions:
             stress = crosssection.getMaxShearStress(self.wingLoading.getShearForce(2)(crosssection.yLocation), self.wingLoading.getInternalMoment(1)(crosssection.yLocation))
-            if stress > max:
-                max = stress
-                yLoc = crosssection.yLocation
 
-        return max, yLoc
+            front.append(stress[0])
+            aft.append(stress[1])
+
+        return [front, aft]
 
     def draw(self, drawTopStringers=True, drawBottomStringers=True):
         plt.clf()
@@ -378,7 +444,7 @@ class Wingbox:
         plt.show()
 
     def drawCrosssection(self, posY, drawSidewallCenterlines=False, drawCentroid=False, drawBendingStress=False):
-        self.getGeneratedCrosssectionAtY(posY).drawCrosssection(drawSidewallCenterlines, drawCentroid, drawBendingStress, Mx=self.wingLoading.getInternalMoment(0)(posY), Mz=self.wingLoading.getInternalMoment(2)(posY))
+        self.getGeneratedCrosssectionAtY(posY).drawCrosssection(drawSidewallCenterlines, drawCentroid, drawBendingStress, Mx=self.wingLoading.getInternalMoment(0)(posY), Mz=0)
 
     def drawInertias(self):
         inertiaNames = [r"$I_{xx}$", r"$I_{zz}$", r"$I_{xz}$", "$J$"]
@@ -401,6 +467,14 @@ class Wingbox:
 
         if axisSameScale:
             plt.gca().set_aspect('equal', adjustable='box')
+
+        plt.show()
+
+    def drawMaximumTensileStress(self):
+        plt.title("Maximum Normal Stress")
+        plt.plot(self.crossectionYLocations, self.getMaximumTensileStressList())
+        plt.xlabel('semi-span [m]')
+        plt.ylabel('stress [Pa]')
 
         plt.show()
 
@@ -445,6 +519,19 @@ class Wingbox:
 
         plt.show()
 
+
+    def drawMaxShearStress(self):
+        yLabels = [r"$\tau_{front}$ [Pa]", r"$\tau_{aft}$ [Pa]"]
+        data = self.getMaximumShearStressList()
+
+        fig, plots = plt.subplots(1, 2)
+        fig.suptitle("Max Shear Stress Magnitude")
+        for col in range(2):
+            plots[col].plot(self.crossectionYLocations, data[col])
+            plots[col].set(ylabel=yLabels[col], xlabel='semi-span [m]')
+        fig.tight_layout(pad=1.5)
+
+        plt.show()
 
 
 

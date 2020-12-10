@@ -105,6 +105,17 @@ class Polygon:
 
         return Polygon(newCoords, newRefs)
 
+    def getScaledPolygon(self, scale):
+        newCoords = []
+        newRefs = []
+
+        for coord in self.coords:
+            newCoords.append([i*scale for i in coord])
+
+        for point in self.referencePoints:
+            newRefs.append([i*scale for i in point])
+
+        return Polygon(newCoords, newRefs)
 
     # dont question this absolute mess
     def getCutByY(self, y, getBottom=False, getTop=False):
@@ -226,7 +237,12 @@ class Polygon:
 
         return inertia
 
-    def draw(self, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False):
+    def draw(self, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False, drawCentroid=False):
+
+        # draw centroid
+        if drawCentroid:
+            plt.plot(self.getCentroid()[0], self.getCentroid()[1], marker='o', color="red", markersize=3)
+            plt.annotate("Centroid", self.getCentroid(), color=color)
 
         plt.gca().set_aspect('equal', adjustable='box')
         self.addToPlot(plt, color=color, drawRefPoints=drawRefPoints, drawPointIndices=drawPointIndices, linestyle=linestyle, linewidth=linewidth)
@@ -276,6 +292,9 @@ class StringerType:
     def getMirrorStringerZ(self):
         return StringerType(polygon=self.stringerShape.getMirroredPolygonZ())
 
+    def getScaledStringer(self, scale):
+        return StringerType(polygon=self.stringerShape.getScaledPolygon(scale))
+
     def __getDistanceBetweenPoints(self, coord1, coord2):
         return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
 
@@ -286,5 +305,5 @@ class StringerType:
 
         return angleAlignment - angleLine
 
-    def drawUnplacedStringer(self, color="red"):
-        self.stringerShape.draw(drawRefPoints=True, color=color)
+    def drawUnplacedStringer(self, color="red", drawCentroid=False, drawRefPoints=True):
+        self.stringerShape.draw(drawRefPoints=drawRefPoints, color=color, drawCentroid=drawCentroid)
