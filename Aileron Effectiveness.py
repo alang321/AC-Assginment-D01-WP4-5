@@ -14,36 +14,8 @@ rho = 1.225
 AileronEffSea = []
 SpeedValuesSea = []
 for speed in range(300):
-    if speed <= 137.9:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    elif speed <= 157.90:
-        dCL_dXi = 4.984816364
-        dCm_dXi = -0.7448576176
-    elif speed <= 177.90:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    elif speed <= 197.90:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    elif speed <= 217.90:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    elif speed <= 237.90:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    elif speed <= 257.90:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    elif speed <= 277.90:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    elif speed <= 297.90:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
-    else:
-        dCL_dXi = 4.956167994
-        dCm_dXi = -0.7735059875
+    dCL_dXi = 2.38 + 0.0241 * speed - 2.81E-5 * (speed ** 2)
+    dCm_dXi = -0.419 - 3.7E-3 * speed + 7.67E-6 * (speed ** 2)
     Top = 0.5 * rho * (speed**2) * SurfaceArea * chord * dCm_dXi * dCL_dAlpha + K * dCL_dXi
     Bot = (K - 0.5 * rho * (speed**2) * SurfaceArea * chord * e * dCL_dAlpha) * dCL_dXi
     SpeedValuesSea.append(speed)
@@ -55,6 +27,8 @@ rho = 0.4416
 AileronEffCruise = []
 SpeedValuesCruise = []
 for speed in range(300):
+    dCL_dXi = 3.57 + 9.01E-3 * speed + 1.28E-5 * (speed ** 2)
+    dCm_dXi = -0.782 + 1.22E-3 * speed - 6.39E-6 * (speed ** 2)
     Top = 0.5 * rho * (speed**2) * SurfaceArea * chord * dCm_dXi * dCL_dAlpha + K * dCL_dXi
     Bot = (K - 0.5 * rho * (speed**2) * SurfaceArea * chord * e * dCL_dAlpha) * dCL_dXi
     SpeedValuesCruise.append(speed)
