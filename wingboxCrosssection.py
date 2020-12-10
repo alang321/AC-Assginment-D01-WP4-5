@@ -329,28 +329,33 @@ class WingboxCrossection:
 
         qs = self.__getMulticellTorsion(internalTorque)
 
-        magnitude = -1
+        front = -1
+        aft = -1
 
         aftSparIndex = self.numSections - 1
 
         # if torque is positive and shear is positive front spar
         if internalTorque >= 0 and Vz >= 0:
-            magnitude = abs(taoShear) + abs(qs[0] / self.sparThicknesses[0])
+            front = abs(taoShear) + abs(qs[0] / self.sparThicknesses[0])
+            aft = abs(taoShear) - abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
         # if torque is negative and shear is positive at aft spar
         elif internalTorque <= 0 and Vz >= 0:
-            magnitude = abs(taoShear) + abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
+            front = abs(taoShear) - abs(qs[0] / self.sparThicknesses[0])
+            aft = abs(taoShear) + abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
         # if torque is negative and shear is negative at front spar
         elif internalTorque <= 0 and Vz <= 0:
-            magnitude = abs(taoShear) + abs(qs[0] / self.sparThicknesses[0])
+            front = abs(taoShear) + abs(qs[0] / self.sparThicknesses[0])
+            aft = abs(taoShear) - abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
         # if torque is positive and shear is negative at aft spar
         elif internalTorque >= 0 and Vz <= 0:
-            magnitude = abs(taoShear) + abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
+            front = abs(taoShear) - abs(qs[0] / self.sparThicknesses[0])
+            aft = abs(taoShear) + abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
 
 
         #plt.gca().set_aspect('equal', adjustable='box')
         #plt.show()
 
-        return magnitude
+        return [front, aft]
 
     def getBendingStressAtPoint(self, Mx, Mz, x, z):
         return ((self.ixx * Mz - self.izx * Mx)/(self.ixx * self.izz - self.izx**2))*x + ((self.izz * Mx - self.izx * Mz)/(self.ixx * self.izz - self.izx**2))*z

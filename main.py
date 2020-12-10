@@ -140,7 +140,7 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
     flangeThicknessTopFunc = sp.interpolate.interp1d(sectionEndLocations, flangeThicknessesTop, kind='next', fill_value="extrapolate")
     flangeThicknessBottomFunc = sp.interpolate.interp1d(sectionEndLocations, flangeThicknessesBottom, kind='next', fill_value="extrapolate")
 
-    return Wingbox(ribLocations=sectionEndLocations, spars=sparsOutput, stringersTop=topStringersOutput, stringersBottom=bottomStringersOutput, sparCapSide=sparCapSide, sparCapCenter=sparCapCenter, flangeThicknesses=[flangeThicknessTopFunc, flangeThicknessBottomFunc], crosssectionAmount=200)
+    return Wingbox(ribLocations=[0, *sectionEndLocations], spars=sparsOutput, stringersTop=topStringersOutput, stringersBottom=bottomStringersOutput, sparCapSide=sparCapSide, sparCapCenter=sparCapCenter, flangeThicknesses=[flangeThicknessTopFunc, flangeThicknessBottomFunc], crosssectionAmount=200)
 
 def checkWingBox(loadingCases, wingbox):
     yieldStrength = AircraftProperties.WingboxMaterial["yield strength"]
@@ -161,6 +161,8 @@ def checkWingBox(loadingCases, wingbox):
 
             # plot loading cases
             plotWingLoading(loading[0])
+
+            wingbox.checkWebShearBuckling()
 
             wingbox.drawMaximumTensileStress()
 
@@ -234,7 +236,7 @@ wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stri
 
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
-wingbox.drawCrosssection(2.3, drawCentroid=True, drawSidewallCenterlines=True)
+wingbox.drawCrosssection(2.5, drawCentroid=True, drawSidewallCenterlines=True)
 wingbox.getGeneratedCrosssectionAtY(2.5).getMaxShearStress(0, 0)
 #wingbox.drawInertias()
 

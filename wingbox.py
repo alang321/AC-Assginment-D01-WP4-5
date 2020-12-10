@@ -12,6 +12,7 @@ class Wingbox:
     __fuelDensity = AircraftProperties.Fuel["fuel density"]
     __density = AircraftProperties.WingboxMaterial["density"]
     __shear = AircraftProperties.WingboxMaterial["shear strength"]
+    __poissons = AircraftProperties.WingboxMaterial["poisson's ratio"]
 
     integrationLimit = 50
     integrationFidelity = 20
@@ -51,6 +52,7 @@ class Wingbox:
         self.stringersBottom = stringersBottom
         self.stringers = [stringersTop, stringersBottom]
         self.sparCaps = self.__placeSparCaps(sparCapSide, sparCapCenter)
+        self.sideSparCaps = sparCapSide
 
         self.stringerLines = []
         for stringerList in self.stringers:
@@ -98,25 +100,61 @@ class Wingbox:
 
         self.totalMass = self.materialVolume * self.__density
 
-        #a over b values for buckling
-        self.abflange = 0
-        self.abSparFunc = self.__getABSpar()
-
         self.wingLoading = wingLoading
 
-    def __getABSpar(self):
-        return
-        abList = []
+    def checkWebShearBuckling(self):
 
-        start = 0
-        for i in self.ribLocations:
-            #todo : get distance between stringers
+        # for loop for each cell
+        # if no stringer between two outhermost with clamped edges
+        # if 1 stringer between stringer and spar cap with 1 clamped side
+        # otherwise only check between stringer 0 and 1, this obviously assumes equal spacing
 
-            start = i
+        shearList = self.getMaximumShearStressList()
 
-        abFunc = interp1d(self.ribLocations, abList, kind='next', fill_value="extrapolate")
+        maxShearPerSection = [[0] * len(self.ribLocations - 1), [0] * len(self.ribLocations - 1)] # list of lists [front, aft]
 
-        return abFunc
+        aPerSection = []
+        bPerSection = [[0] * len(self.ribLocations - 1), [0] * len(self.ribLocations - 1)]
+
+        sidewallIndices = [[0, 1], [2, 3]]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = secIndex
+
+            #a per section
+            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex] + 1) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
+
+            #max shear magnitude
+            for i in range(2):
+                #shear
+                if shearList[i][index] > maxShearPerSection[i][sectionIndex]:
+                    maxShearPerSection[i][sectionIndex] = shearList[i][index]
+
+                # b, spar length at each end
+                crossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex + 1])
+                #+ sidewallIndices[i]
+                #bPerSection[i].append()
+
+        # a per section
+        # b per section
+
+        for sectionIndex in range(len(self.ribLocations)-1):
+
+            startCrossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex])
+
+
+
+            a = self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]
+            #todo: euclidian distance
+
+            #shearList(startCrossection.yLocation)
+
+            # check front spar
+            # check aft spar
+
 
 
     def __getInternalAndMaterialVolume(self):
@@ -361,14 +399,16 @@ class Wingbox:
         return maxNormalStressList
 
     def getMaximumShearStressList(self):
-        maxShearStressList = []
+        front = []
+        aft = []
 
         for crosssection in self.crosssecctions:
             stress = crosssection.getMaxShearStress(self.wingLoading.getShearForce(2)(crosssection.yLocation), self.wingLoading.getInternalMoment(1)(crosssection.yLocation))
 
-            maxShearStressList.append(stress)
+            front.append(stress[0])
+            aft.append(stress[1])
 
-        return maxShearStressList
+        return [front, aft]
 
     def draw(self, drawTopStringers=True, drawBottomStringers=True):
         plt.clf()
@@ -481,11 +521,15 @@ class Wingbox:
 
 
     def drawMaxShearStress(self):
-        plt.title("Max Shear Stress Magnitude")
-        plt.plot(self.crossectionYLocations, self.getMaximumShearStressList())
+        yLabels = [r"$\tau_{front}$ [Pa]", r"$\tau_{aft}$ [Pa]"]
+        data = self.getMaximumShearStressList()
 
-        plt.xlabel('semi-span [m]')
-        plt.ylabel(ylabel=r'$\tau$ [Pa]')
+        fig, plots = plt.subplots(1, 2)
+        fig.suptitle("Max Shear Stress Magnitude")
+        for col in range(2):
+            plots[col].plot(self.crossectionYLocations, data[col])
+            plots[col].set(ylabel=yLabels[col], xlabel='semi-span [m]')
+        fig.tight_layout(pad=1.5)
 
         plt.show()
 
