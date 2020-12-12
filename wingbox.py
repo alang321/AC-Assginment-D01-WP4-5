@@ -6,13 +6,16 @@ from scipy.interpolate import interp1d
 from scipy.integrate import quad
 from WingLoads import WingLoads
 import numpy as np
+import bucklingcoeff
 
 class Wingbox:
     __fuelVolumeReq = AircraftProperties.Fuel["total fuel volume required"] / 2
     __fuelDensity = AircraftProperties.Fuel["fuel density"]
     __density = AircraftProperties.WingboxMaterial["density"]
-    __shear = AircraftProperties.WingboxMaterial["shear strength"]
+    __shearStrength = AircraftProperties.WingboxMaterial["shear strength"]
     __poissons = AircraftProperties.WingboxMaterial["poisson's ratio"]
+    __E = AircraftProperties.WingboxMaterial["e modulus"]
+    __G = AircraftProperties.WingboxMaterial["shear modulus"]
 
     integrationLimit = 50
     integrationFidelity = 20
@@ -29,10 +32,13 @@ class Wingbox:
         self.leadingedgeXPosTip = self.leadingEdgeXPos(self.semispan) # x position of the leading edge of the tip chord
 
         #ribs
-        self.ribLocations = ribLocations
+        self.ribLocations = []
+        for i in ribLocations:
+            self.ribLocations.append(min(self.semispan, i))
+
         self.ribLines = []
         for rib in self.ribLocations:
-            if rib < self.semispan:
+            if rib <= self.semispan:
                 lexpos = self.leadingEdgeXPos(rib)
                 xVals = [lexpos, lexpos + self.getChordAtY(rib)]
                 yVals = [rib, rib]
@@ -90,11 +96,6 @@ class Wingbox:
         #just for drawing the inertias
         self.inertiaFunctionsY = [self.ixxFuncY, self.izzFuncY, self.ixzFuncY, self.jFuncY]
 
-        #mat properties
-        # shear modulus": 26 * 10**9,
-        self.E = AircraftProperties.WingboxMaterial["e modulus"]
-        self.G = AircraftProperties.WingboxMaterial["shear modulus"]
-
         self.centroidDistFromC4AtYFunc = self.centroidDistFromC4AtY()
         self.internalVolume, self.materialVolume = self.__getInternalAndMaterialVolume()
 
@@ -102,19 +103,13 @@ class Wingbox:
 
         self.wingLoading = wingLoading
 
-    def checkWebShearBuckling(self):
-
-        # for loop for each cell
-        # if no stringer between two outhermost with clamped edges
-        # if 1 stringer between stringer and spar cap with 1 clamped side
-        # otherwise only check between stringer 0 and 1, this obviously assumes equal spacing
-
+    def checkShearWebBuckling(self):
         shearList = self.getMaximumShearStressList()
 
-        maxShearPerSection = [[0] * len(self.ribLocations - 1), [0] * len(self.ribLocations - 1)] # list of lists [front, aft]
+        maxShearPerSection = [[0] * (len(self.ribLocations) - 1), [0] * (len(self.ribLocations) - 1)] # list of lists [front, aft]
 
         aPerSection = []
-        bPerSection = [[0] * len(self.ribLocations - 1), [0] * len(self.ribLocations - 1)]
+        bPerSection = [[], []]
 
         sidewallIndices = [[0, 1], [2, 3]]
 
@@ -122,10 +117,8 @@ class Wingbox:
             sectionIndex = -1
             for secIndex, loc in enumerate(self.ribLocations):
                 if yLocation >= loc:
-                    sectionIndex = secIndex
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
 
-            #a per section
-            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex] + 1) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
 
             #max shear magnitude
             for i in range(2):
@@ -133,28 +126,87 @@ class Wingbox:
                 if shearList[i][index] > maxShearPerSection[i][sectionIndex]:
                     maxShearPerSection[i][sectionIndex] = shearList[i][index]
 
-                # b, spar length at each end
-                crossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex + 1])
-                #+ sidewallIndices[i]
-                #bPerSection[i].append()
+        for sectionIndex in range(len(self.ribLocations) - 1):
+            #a per section
+            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex] + 1) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
 
-        # a per section
-        # b per section
+            for i in range(2):
+                # b, spar length at each end
+                outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex + 1]).outsidePolygon
+                dist = abs(outerPolygon.coords[sidewallIndices[i][0]][1] - outerPolygon.coords[sidewallIndices[i][1]][1])
+                bPerSection[i].append(dist)
 
         for sectionIndex in range(len(self.ribLocations)-1):
 
-            startCrossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex])
+            sparThicknesses = [self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex])/2), self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex])/2)]
+
+            for i in range(2):
+                ks = bucklingcoeff.shearfuncC(aPerSection[sectionIndex]/bPerSection[i][sectionIndex])
+                tao_cr = min(((np.pi**2 * ks * self.__E) / (12 * (1 - self.__poissons**2))) * (sparThicknesses[i] / bPerSection[i][sectionIndex]) ** 2, self.__shearStrength)
+                if maxShearPerSection[i][sectionIndex] > tao_cr:
+                    sideText = ["front", "aft"]
+                    print("Shear Buckling occurs in section", str(sectionIndex + 1), "from root. In spar:", sideText[i], ". Max Shear stress in that sheet:", str(maxShearPerSection[i][sectionIndex]), "[Pa].  Maximum allowable shear stress:", str(tao_cr), "[Pa]")
+                    return True
+
+        return False
+
+    def checkFlangeBuckling(self):
+        if self.wingLoading.getInternalMoment(0)(1) > 0:
+            side = 1
+        else:
+            side = -1
+
+        compressiveStressList = self.getMaximumCompressiveStressMagnitudeList()
+
+        maxCompPerSection = [[0] * (len(self.ribLocations) - 1), [0] * (len(self.ribLocations) - 1)] # list of lists [front, aft]
+
+        aPerSection = []
+        bPerSection = [[], []]
+
+        #flange start area
+
+        #flange end area
+
+        kcFuncPerSection = []
+
+        sidewallIndices = [[0, 1], [2, 3]]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
 
 
+            #max shear magnitude
+            for i in range(2):
+                #shear
+                if compressiveStressList[i][index] > maxCompPerSection[i][sectionIndex]:
+                    maxShearPerSection[i][sectionIndex] = shearList[i][index]
 
-            a = self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]
-            #todo: euclidian distance
+        for sectionIndex in range(len(self.ribLocations) - 1):
+            #a per section
+            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex] + 1) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
 
-            #shearList(startCrossection.yLocation)
+            for i in range(2):
+                # b, spar length at each end
+                outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex + 1]).outsidePolygon
+                dist = abs(outerPolygon.coords[sidewallIndices[i][0]][1] - outerPolygon.coords[sidewallIndices[i][1]][1])
+                bPerSection[i].append(dist)
 
-            # check front spar
-            # check aft spar
+        for sectionIndex in range(len(self.ribLocations)-1):
 
+            sparThicknesses = [self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex])/2), self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex])/2)]
+
+            for i in range(2):
+                ks = bucklingcoeff.shearfuncC(aPerSection[sectionIndex]/bPerSection[i][sectionIndex])
+                tao_cr = min(((np.pi**2 * ks * self.__E) / (12 * (1 - self.__poissons**2))) * (sparThicknesses[i] / bPerSection[i][sectionIndex]) ** 2, self.__shearStrength)
+                if maxShearPerSection[i][sectionIndex] > tao_cr:
+                    sideText = ["front", "aft"]
+                    print("Shear Buckling occurs in section", str(sectionIndex + 1), "from root. In spar:", sideText[i], ". Max Shear stress in that sheet:", str(maxShearPerSection[i][sectionIndex]), "[Pa].  Maximum allowable shear stress:", str(tao_cr), "[Pa]")
+                    return True
+
+        return False
 
 
     def __getInternalAndMaterialVolume(self):
@@ -269,7 +321,7 @@ class Wingbox:
         return crosssections
 
     def getGeneratedCrosssectionAtY(self, yPos):
-        i = int((yPos * self.crosssectionAmount)/self.semispan)
+        i = min(int((yPos * self.crosssectionAmount)/self.semispan), self.crosssectionAmount - 1)
         return self.crosssecctions[i]
 
     def getCrosssectionAtY(self, posY):
@@ -320,7 +372,7 @@ class Wingbox:
         yList = np.linspace(0, self.semispan, fidelity)
 
         for yVal in yList:
-            f = lambda y: MxAtYFunction(y) / (self.E * self.ixxFuncY(y))
+            f = lambda y: MxAtYFunction(y) / (self.__E * self.ixxFuncY(y))
             i = quad(f, 0, yVal, limit=limit)
             dvoverdy.append(i[0] * -1)
 
@@ -339,7 +391,7 @@ class Wingbox:
         yList = np.linspace(0, self.semispan, fidelity)
 
         for yVal in yList:
-            f = lambda y: MxAtYFunction(y) / (self.E * self.ixxFuncY(y))
+            f = lambda y: MxAtYFunction(y) / (self.__E * self.ixxFuncY(y))
             i = quad(f, 0, yVal, limit=limit)
             dvoverdy.append(i[0] * -1)
 
@@ -356,7 +408,7 @@ class Wingbox:
         yList = np.linspace(0, self.semispan, fidelity)
 
         for yVal in yList:
-            dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
+            dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.__G * self.jFuncY(y))
             i = quad(dthethaoverdyfunc, 0, yVal, limit=limit)
             theta.append(i[0] * -1)
 
@@ -365,7 +417,7 @@ class Wingbox:
     def getTwist(self, yPos, limit=integrationLimit):
         MyAtYFunction = self.wingLoading.getInternalMoment(1)
 
-        dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.G * self.jFuncY(y))
+        dthethaoverdyfunc = lambda y: MyAtYFunction(y) / (self.__G * self.jFuncY(y))
         i = quad(dthethaoverdyfunc, 0, yPos, limit=limit)
 
         return i[0]
@@ -397,6 +449,18 @@ class Wingbox:
             maxNormalStressList.append(max)
 
         return maxNormalStressList
+
+    def getMaximumCompressiveStressMagnitudeList(self):
+        minNormalStressList = []
+
+        for crosssection in self.crosssecctions:
+            min = 0
+            for point in crosssection.outsidePolygon.coords:
+                stress = crosssection.getBendingStressAtPoint(self.wingLoading.getInternalMoment(0)(crosssection.yLocation), 0, point[0], point[1])
+                if stress < min:
+                    min = stress
+
+            minNormalStressList.append(abs(min))
 
     def getMaximumShearStressList(self):
         front = []

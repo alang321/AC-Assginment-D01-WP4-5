@@ -162,7 +162,7 @@ def checkWingBox(loadingCases, wingbox):
             # plot loading cases
             plotWingLoading(loading[0])
 
-            wingbox.checkWebShearBuckling()
+            wingbox.checkShearWebBuckling()
 
             wingbox.drawMaximumTensileStress()
 

@@ -31,7 +31,3 @@ shearfuncC = sp.interpolate.interp1d(abshearC, coeffshearC, kind='linear', fill_
 compressionfuncC = sp.interpolate.interp1d(abcompressionC, coeffcompressionC, kind='linear', fill_value="extrapolate")
 
 
-print(shearfuncC(5))
-print(compressionfuncC(5))
-
-
