@@ -144,6 +144,8 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
 
 def checkWingBox(loadingCases, wingbox):
     yieldStrength = AircraftProperties.WingboxMaterial["yield strength"]
+    edgecrackStrength = AircraftProperties.WingboxMaterial["edge crack strength"]
+    centercrackStrength = AircraftProperties.WingboxMaterial["center crack strength"]
 
     maxTwistDelfection = np.deg2rad(10)
     maxVerticalDeflection = AircraftProperties.Planform["span"]*0.15
@@ -175,6 +177,14 @@ def checkWingBox(loadingCases, wingbox):
                 wingbox.drawCrosssection(max[1].yLocation, drawBendingStress=True)
                 print("Min stress", min[0], "at y:", min[1].yLocation, "at point:", min[2])
                 wingbox.drawCrosssection(min[1].yLocation, drawBendingStress=True)
+                return False
+
+            #check with cracks
+            if abs(max[0]) > edgecrackStrength or abs(min[0]) > edgecrackStrength:
+                print("Edge cracks will not lead to failure.")
+                return False
+            if abs(max[0]) > centercrackStrength or abs(min[0]) > centercrackStrength:
+                print("Center cracks will not lead to failure.")
                 return False
 
             deflection = wingbox.getVerticalDeflectionAtY(semispan)
