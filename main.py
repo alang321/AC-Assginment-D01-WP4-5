@@ -182,11 +182,11 @@ def checkWingBox(loadingCases, wingbox):
                 return False
 
             #check with cracks
-            if abs(max[0]) > edgecrackStrength or abs(min[0]) > edgecrackStrength:
-                print("Edge cracks will not lead to failure.")
+            if abs(max[0]) > edgecrackStrength:
+                print("Edge cracks will lead to failure.")
                 return False
-            if abs(max[0]) > centercrackStrength or abs(min[0]) > centercrackStrength:
-                print("Center cracks will not lead to failure.")
+            if abs(max[0]) > centercrackStrength:
+                print("Center cracks will lead to failure.")
                 return False
 
             deflection = wingbox.getVerticalDeflectionAtY(semispan)
