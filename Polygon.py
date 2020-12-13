@@ -278,7 +278,7 @@ class StringerType:
 
             self.stringerShape = Polygon(coordinateList, baseAlignmentPoints)
 
-        self.clampedAttachment = isClampedAttachment
+        self.isClampedAttachment = isClampedAttachment
         self.isSparCap = isSparCap
 
     #returns a polygon of the stringer with the attachemnt point at point and the alignemntpoints aligned rotationally with the line, lin eis supposed to be a list of 2 long lists (2 points)
@@ -300,13 +300,13 @@ class StringerType:
         return newStringerPolygon
 
     def getMirrorStringerX(self):
-        return StringerType(polygon=self.stringerShape.getMirroredPolygonX(), isClampedAttachment=self.clampedAttachment, isSparCap=self.isSparCap)
+        return StringerType(polygon=self.stringerShape.getMirroredPolygonX(), isClampedAttachment=self.isClampedAttachment, isSparCap=self.isSparCap)
 
     def getMirrorStringerZ(self):
-        return StringerType(polygon=self.stringerShape.getMirroredPolygonZ(), isClampedAttachment=self.clampedAttachment, isSparCap=self.isSparCap)
+        return StringerType(polygon=self.stringerShape.getMirroredPolygonZ(), isClampedAttachment=self.isClampedAttachment, isSparCap=self.isSparCap)
 
     def getScaledStringer(self, scale):
-        return StringerType(polygon=self.stringerShape.getScaledPolygon(scale), isClampedAttachment=self.clampedAttachment, isSparCap=self.isSparCap)
+        return StringerType(polygon=self.stringerShape.getScaledPolygon(scale), isClampedAttachment=self.isClampedAttachment, isSparCap=self.isSparCap)
 
     def __getDistanceBetweenPoints(self, coord1, coord2):
         return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5

@@ -164,6 +164,8 @@ def checkWingBox(loadingCases, wingbox):
             # plot loading cases
             plotWingLoading(loading[0])
 
+            wingbox.checkFlangeBuckling()
+
             wingbox.checkShearWebBuckling()
 
             wingbox.drawMaximumTensileStress()
@@ -236,8 +238,8 @@ extraSpars =                [1,     1,      0,      0,      0,      0,      0,  
 sparThicknesses =           [0.014, 0.013,  0.011,  0.009,  0.010,  0.008,   0.007,  0.005]  # m
 flangeThicknessesTop =      [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
 flangeThicknessesBottom =   [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
-stringersTop =              [3,    33,     31,     18,     15,     6,      3,      2] # m
-stringersBottom =           [3,    23,     21,     14,     10,     4,      3,      2] # m
+stringersTop =              [35,    33,     31,     18,     15,     6,      3,      2] # m
+stringersBottom =           [25,    23,     21,     14,     10,     4,      3,      2] # m
 
 
 wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom)

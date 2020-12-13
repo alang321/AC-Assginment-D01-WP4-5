@@ -319,7 +319,7 @@ class WingboxCrossection:
             Q -= abs(cut.getCentroid()[1] - self.centroid[1]) * cut.getArea()
 
         if takeIntoAccountStringers:
-            for i in self.stringerPolygons:
+            for i in self.stringerPolygons[0]:
                 if i.getCentroid()[1] > self.centroid[1]:
                     Q -= abs(i.getCentroid()[1] - self.centroid[1]) * i.getArea()
 
