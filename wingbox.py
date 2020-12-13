@@ -19,6 +19,8 @@ class Wingbox:
     __E = AircraftProperties.WingboxMaterial["e modulus"]
     __G = AircraftProperties.WingboxMaterial["shear modulus"]
 
+    __minRivetPitch = AircraftProperties.WingboxMaterial["column minimum rivet pitch"]
+
     __ribThickness = 1.5 # mm
 
     integrationLimit = 50
@@ -235,6 +237,47 @@ class Wingbox:
                           "from left. Distance", str(b), "[m]. Max comp Force in that sheet:", str(maxCompForcePerSection[sectionIndex]),
                           "[N].  Maximum allowable Force:", str(F_cr), "[N]")
                     return True
+        return False
+
+    def checkColumnBuckling(self):
+        K = 1 # both ends are pinned
+
+        #for checking if flange at top or obttom is in compression
+        if self.wingLoading.getInternalMoment(0)(1) < 0:
+            stringerSideIndex = 0
+        else:
+            stringerSideIndex = 1
+
+        maxInternalMomentPerSection = [[0, 0] for i in range(len(self.ribLocations))] # [yLoc, Mx]
+
+        minReqPitch = [self.semispan, -1] # [pitch, sectionId]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
+
+            internalMoment = self.wingLoading.getInternalMoment(0)(yLocation)
+            if abs(internalMoment) > abs(maxInternalMomentPerSection[sectionIndex][1]):
+                maxInternalMomentPerSection[sectionIndex] = [yLocation, internalMoment]
+
+        for sectionIndex in range(len(self.ribLocations)-1):
+            crossection = self.getGeneratedCrosssectionAtY(maxInternalMomentPerSection[sectionIndex][0])
+
+            stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
+
+            for index, stringer in enumerate(stringerPolygons):
+                for j in range(2):
+                    stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0, x=stringer.referencePoints[j][0], z=stringer.referencePoints[j][1])
+                    reqPitch = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(stress)))**0.5
+                    if reqPitch < minReqPitch[0]:
+                        minReqPitch = [reqPitch, sectionIndex]
+
+        if minReqPitch[0] < self.__minRivetPitch/1000:
+            print("Minimumm required rivet pitch of", str(minReqPitch[0]*1000), "[mm] is lower than minimum allowable pitch of", str(self.__minRivetPitch), "[mm] in section", str(minReqPitch[1] + 1), ".")
+            return True
+
         return False
 
     #endregion

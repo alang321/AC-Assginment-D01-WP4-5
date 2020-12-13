@@ -164,13 +164,18 @@ def checkWingBox(loadingCases, wingbox):
             # plot loading cases
             plotWingLoading(loading[0])
 
-            wingbox.checkFlangeBuckling()
-
-            wingbox.checkShearWebBuckling()
-
             wingbox.drawMaximumTensileStress()
 
             wingbox.drawMaxShearStress()
+
+            if wingbox.checkFlangeBuckling():
+                return False
+
+            if wingbox.checkShearWebBuckling():
+                return False
+
+            if wingbox.checkColumnBuckling():
+                return False
 
             #check normal stress
             max, min = wingbox.getMaximumMinimumNormalStress()

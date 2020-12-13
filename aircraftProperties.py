@@ -132,4 +132,7 @@ class AircraftProperties:
     Safety = {
         "ExternalLoadSF": 1.5
     }
+    Rivets = {
+        "column minimum rivet pitch": 30 #mm, assumed value
+    }
 
