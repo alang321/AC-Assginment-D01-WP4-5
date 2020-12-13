@@ -37,6 +37,4 @@ compressionfuncC = sp.interpolate.interp1d(abcompressionC, coeffcompressionC, ki
 compressionfuncCC = sp.interpolate.interp1d(abcompressionCC, coeffcompressionCC, kind='linear', fill_value="extrapolate")
 
 
-print(compressionfuncCC(4.9))
-
 

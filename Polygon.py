@@ -250,10 +250,12 @@ class Polygon:
 
 # a stringer class with some extra properties to the polygon class, this class is created with a stringer shape and an attachment point, this is then sort of a blue print for further stringers called with the function
 class StringerType:
-    def __init__(self, coordinateList=None, baseAlignmentPoints=None, attachmentPoint=None, polygon=None): #attachmentLineIndices are the indices of the coordinates that form the "base line", so the line in contact with the sheet its attached to
+    def __init__(self, coordinateList=None, baseAlignmentPoints=None, attachmentPoint=None, polygon=None, rivetPoints=None, isClampedAttachment=False, isSparCap=False): #attachmentLineIndices are the indices of the coordinates that form the "base line", so the line in contact with the sheet its attached to
         if polygon is not None:
             self.baseLength = self.__getDistanceBetweenPoints(polygon.referencePoints[0], polygon.referencePoints[1])
             self.stringerShape = polygon
+
+            self.rivetPoints = polygon.referencePoints[3:]
         else:
             if len(baseAlignmentPoints) != 2 or baseAlignmentPoints[0] == baseAlignmentPoints[1]:
                 raise Exception("Invalid Alignment Points")
@@ -266,7 +268,18 @@ class StringerType:
                     attachmentPoint[i] = (baseAlignmentPoints[0][i] + baseAlignmentPoints[1][i]) / 2
 
             baseAlignmentPoints.append(attachmentPoint)
+
+            if rivetPoints is None:
+                baseAlignmentPoints.append(attachmentPoint)
+                self.rivetPoints = [attachmentPoint]
+            else:
+                baseAlignmentPoints.extend(rivetPoints)
+                self.rivetPoints = rivetPoints
+
             self.stringerShape = Polygon(coordinateList, baseAlignmentPoints)
+
+        self.clampedAttachment = isClampedAttachment
+        self.isSparCap = isSparCap
 
     #returns a polygon of the stringer with the attachemnt point at point and the alignemntpoints aligned rotationally with the line, lin eis supposed to be a list of 2 long lists (2 points)
     def getStringerPolygonAtPointAndLine(self, point, line, mirrorHorizontal=False, mirrorVertical=False):
@@ -287,13 +300,13 @@ class StringerType:
         return newStringerPolygon
 
     def getMirrorStringerX(self):
-        return StringerType(polygon=self.stringerShape.getMirroredPolygonX())
+        return StringerType(polygon=self.stringerShape.getMirroredPolygonX(), isClampedAttachment=self.clampedAttachment, isSparCap=self.isSparCap)
 
     def getMirrorStringerZ(self):
-        return StringerType(polygon=self.stringerShape.getMirroredPolygonZ())
+        return StringerType(polygon=self.stringerShape.getMirroredPolygonZ(), isClampedAttachment=self.clampedAttachment, isSparCap=self.isSparCap)
 
     def getScaledStringer(self, scale):
-        return StringerType(polygon=self.stringerShape.getScaledPolygon(scale))
+        return StringerType(polygon=self.stringerShape.getScaledPolygon(scale), isClampedAttachment=self.clampedAttachment, isSparCap=self.isSparCap)
 
     def __getDistanceBetweenPoints(self, coord1, coord2):
         return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5

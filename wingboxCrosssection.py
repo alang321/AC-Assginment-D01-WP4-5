@@ -43,9 +43,9 @@ class WingboxCrossection:
             self.perSectionThicknesses.append(sectionThicknesses)
 
         #number of stringers lists
-        self.stringersTop = stringersTop
-        self.stringersBottom = stringersBottom
-        self.stringers = [self.stringersTop, stringersBottom]
+        self.stringersTop = sorted(stringersTop, key=operator.itemgetter(0))
+        self.stringersBottom = sorted(stringersBottom, key=operator.itemgetter(0))
+        self.stringers = [self.stringersTop, self.stringersBottom]
 
         #outside corner Coordinates of the entire wingbox
         outerCornerCoordinates = self.__getOuterCornerCoordinates()
@@ -70,7 +70,8 @@ class WingboxCrossection:
         self.positiveCentroidContributions = []
         self.negativeCentroidContributions = []
         self.positiveCentroidContributions.append(self.outsidePolygon)
-        self.positiveCentroidContributions.extend(self.stringerPolygons)
+        self.positiveCentroidContributions.extend(self.stringerPolygons[0])
+        self.positiveCentroidContributions.extend(self.stringerPolygons[1])
         self.negativeCentroidContributions.extend(self.insidePolygons)
 
         #calculate total enclosed area and crossectional area
@@ -86,7 +87,8 @@ class WingboxCrossection:
         self.negativeInertiaContributions = []
         self.onlySteinerTermContribution = []
         self.positiveInertiaContributions.append(self.outsidePolygon)
-        self.positiveInertiaContributions.extend(self.stringerPolygons)
+        self.positiveInertiaContributions.extend(self.stringerPolygons[0])
+        self.positiveInertiaContributions.extend(self.stringerPolygons[1])
         self.negativeInertiaContributions.extend(self.insidePolygons)
 
         #calculate inertias
@@ -263,7 +265,7 @@ class WingboxCrossection:
 
     # calculate the centroid and returns it ass coordinate
     def __placeStringers(self):
-        stringers = []
+        stringers = [[], []]
 
         attachmentLine = [[self.insidePolygons[0].coords[0], self.insidePolygons[0].coords[3]], [self.insidePolygons[0].coords[1], self.insidePolygons[0].coords[2]]]
 
@@ -275,7 +277,7 @@ class WingboxCrossection:
             zList = self.__getZfromXLine(attachmentLine[side][0], attachmentLine[side][1], xList)
 
             for index, stringer in enumerate(self.stringers[side]):
-                stringers.append(stringer[1].getStringerPolygonAtPointAndLine([xList[index], zList[index]], [attachmentLine[side][0], attachmentLine[side][1]]))
+                stringers[side].append(stringer[1].getStringerPolygonAtPointAndLine([xList[index], zList[index]], [attachmentLine[side][0], attachmentLine[side][1]]))
 
         return stringers
 

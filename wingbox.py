@@ -7,15 +7,19 @@ from scipy.integrate import quad
 from WingLoads import WingLoads
 import numpy as np
 import bucklingcoeff
+import operator
 
 class Wingbox:
     __fuelVolumeReq = AircraftProperties.Fuel["total fuel volume required"] / 2
     __fuelDensity = AircraftProperties.Fuel["fuel density"]
     __density = AircraftProperties.WingboxMaterial["density"]
     __shearStrength = AircraftProperties.WingboxMaterial["shear strength"]
+    __yieldStrength = AircraftProperties.WingboxMaterial["yield strength"]
     __poissons = AircraftProperties.WingboxMaterial["poisson's ratio"]
     __E = AircraftProperties.WingboxMaterial["e modulus"]
     __G = AircraftProperties.WingboxMaterial["shear modulus"]
+
+    __ribThickness = 1.5 # mm
 
     integrationLimit = 50
     integrationFidelity = 20
@@ -128,11 +132,11 @@ class Wingbox:
 
         for sectionIndex in range(len(self.ribLocations) - 1):
             #a per section
-            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex] + 1) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
+            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex + 1]) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
 
             for i in range(2):
                 # b, spar length at each end
-                outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex + 1]).outsidePolygon
+                outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex]).outsidePolygon
                 dist = abs(outerPolygon.coords[sidewallIndices[i][0]][1] - outerPolygon.coords[sidewallIndices[i][1]][1])
                 bPerSection[i].append(dist)
 
@@ -151,25 +155,21 @@ class Wingbox:
         return False
 
     def checkFlangeBuckling(self):
-        if self.wingLoading.getInternalMoment(0)(1) > 0:
-            side = 1
+        #for checking if flange at top or obttom is in compression
+        if self.wingLoading.getInternalMoment(0)(1) < 0:
+            flangeThickness = self.flangeThicknesses[0]
+            cornerCoords = [0, 3]
+            stringerSideIndex = 0
+            #print("Compression Top")
         else:
-            side = -1
+            flangeThickness = self.flangeThicknesses[1]
+            cornerCoords = [1, 2]
+            stringerSideIndex = 1
+            #print("Compression Bot")
 
         compressiveStressList = self.getMaximumCompressiveStressMagnitudeList()
 
-        maxCompPerSection = [[0] * (len(self.ribLocations) - 1), [0] * (len(self.ribLocations) - 1)] # list of lists [front, aft]
-
-        aPerSection = []
-        bPerSection = [[], []]
-
-        #flange start area
-
-        #flange end area
-
-        kcFuncPerSection = []
-
-        sidewallIndices = [[0, 1], [2, 3]]
+        maxCompForcePerSection = [0] * (len(self.ribLocations) - 1)
 
         for index, yLocation in enumerate(self.crossectionYLocations):
             sectionIndex = -1
@@ -177,37 +177,66 @@ class Wingbox:
                 if yLocation >= loc:
                     sectionIndex = min(secIndex, len(self.ribLocations) - 2)
 
+            #get flange area
+            wingboxEdgesPolygon = self.getGeneratedCrosssectionAtY(yLocation).outsidePolygon
 
-            #max shear magnitude
-            for i in range(2):
-                #shear
-                if compressiveStressList[i][index] > maxCompPerSection[i][sectionIndex]:
-                    maxShearPerSection[i][sectionIndex] = shearList[i][index]
+            flangeArea = ((wingboxEdgesPolygon.coords[cornerCoords[0]][0] - wingboxEdgesPolygon.coords[cornerCoords[1]][0])**2 + (wingboxEdgesPolygon.coords[cornerCoords[0]][1] - wingboxEdgesPolygon.coords[cornerCoords[1]][1])**2)**0.5 * flangeThickness(yLocation)
+
+            force = compressiveStressList[index] * flangeArea
+            if force > maxCompForcePerSection[sectionIndex]:
+                maxCompForcePerSection[sectionIndex] = force
 
         for sectionIndex in range(len(self.ribLocations) - 1):
             #a per section
-            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex])**2 + (self.leadingEdgeXPos(self.ribLocations[sectionIndex] + 1) - self.leadingEdgeXPos(self.ribLocations[sectionIndex]))**2)**0.5)
+            a = self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]
 
-            for i in range(2):
-                # b, spar length at each end
-                outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex + 1]).outsidePolygon
-                dist = abs(outerPolygon.coords[sidewallIndices[i][0]][1] - outerPolygon.coords[sidewallIndices[i][1]][1])
-                bPerSection[i].append(dist)
+            crossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex])
 
-        for sectionIndex in range(len(self.ribLocations)-1):
+            stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
+            stringerTypes = crossection.stringers[stringerSideIndex]
+            skipNext = False
+            for index in range(1, len(stringerPolygons)):
+                if skipNext:
+                    skipNext = False
+                    continue
 
-            sparThicknesses = [self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex])/2), self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex])/2)]
+                indeces = [index, index - 1]
+                clampingCounter = 0
 
-            for i in range(2):
-                ks = bucklingcoeff.shearfuncC(aPerSection[sectionIndex]/bPerSection[i][sectionIndex])
-                tao_cr = min(((np.pi**2 * ks * self.__E) / (12 * (1 - self.__poissons**2))) * (sparThicknesses[i] / bPerSection[i][sectionIndex]) ** 2, self.__shearStrength)
-                if maxShearPerSection[i][sectionIndex] > tao_cr:
-                    sideText = ["front", "aft"]
-                    print("Shear Buckling occurs in section", str(sectionIndex + 1), "from root. In spar:", sideText[i], ". Max Shear stress in that sheet:", str(maxShearPerSection[i][sectionIndex]), "[Pa].  Maximum allowable shear stress:", str(tao_cr), "[Pa]")
+                # check if index is sparcap, if so skip next to true
+                if stringerTypes[index][1].isSparCap:
+                    skipNext = True
+
+                # check if one side is clamping, add to clamping counter
+                for i in indeces:
+                    if stringerTypes[i][1].isClampedAttachment:
+                        clampingCounter += 1
+
+                if clampingCounter == 0: # all sides simply supported
+                    kcFunc = bucklingcoeff.compressionfuncH
+                elif clampingCounter == 1: # one side simply supported, one clamped
+                    kcFunc = bucklingcoeff.compressionfuncC
+                else: #voth sides clamped
+                    kcFunc = bucklingcoeff.compressionfuncCC
+
+                t = flangeThickness(self.ribLocations[sectionIndex + 1])
+
+                # b
+                b = self.__getDistanceBetweenPoints(stringerPolygons[indeces[1]].referencePoints[3], stringerPolygons[indeces[0]].referencePoints[3])
+
+                #checl if buckling
+                kc = kcFunc(a / b)
+                F_cr = ((np.pi**2 * kc * self.__E) / (12 * (1 - self.__poissons**2))) * (t / b) ** 2
+
+                if maxCompForcePerSection[sectionIndex] > F_cr:
+                    print("Skin Buckling occurs in section", str(sectionIndex + 1), "from root. Between stringers (including spar caps, starting at 1):", str(index), "and", str(index + 1),
+                          "from left. Distance", str(b), "[m]. Max comp Force in that sheet:", str(maxCompForcePerSection[sectionIndex]),
+                          "[N].  Maximum allowable Force:", str(F_cr), "[N]")
                     return True
-
         return False
 
+    def __getDistanceBetweenPoints(self, coord1, coord2):
+        return ((coord1[0] - coord2[0]) ** 2 + (coord1[1] - coord2[1]) ** 2) ** 0.5
 
     def __getInternalAndMaterialVolume(self):
         internal = 0
@@ -221,7 +250,13 @@ class Wingbox:
         internal *= ydist
         material *= ydist
 
-        #todo : add rib volume
+        #rib contributions
+        for i in self.ribLocations:
+            for j in self.getGeneratedCrosssectionAtY(i).insidePolygons:
+                ribVolume = j.getArea() * (self.__ribThickness / 1000)
+
+                internal -= ribVolume
+                material += ribVolume
 
         return internal, material
 
@@ -461,6 +496,8 @@ class Wingbox:
                     min = stress
 
             minNormalStressList.append(abs(min))
+
+        return minNormalStressList
 
     def getMaximumShearStressList(self):
         front = []

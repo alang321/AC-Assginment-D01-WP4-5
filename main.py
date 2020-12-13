@@ -217,17 +217,16 @@ loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitud
 #wingbox definition start
 
 scale = 8
-sideCap = StringerType([[0, 0], [0, -2], [18, -2], [18, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]])
+sideCap = StringerType([[0, 0], [0, -2], [18, -2], [18, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]], rivetPoints=[[4, 0]], isSparCap=True)
 sideCap = sideCap.getScaledStringer(1/1000 * scale)
 
 scale = 8
-centerCap = StringerType([[0, 0], [0, -1], [19, -1], [19, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]])
+centerCap = StringerType([[0, 0], [0, -1], [19, -1], [19, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]], rivetPoints=[[16, 0]], isSparCap=True)
 centerCap = centerCap.getScaledStringer(1/1000 * scale)
 
 scale = 4
 extrudedt = StringerType([[0, 0], [0, -1.5], [8.5, -1.5], [8.5, -18.5], [3, -18.5], [3, -20], [15.5, -20], [15.5, -18.5], [10, -18.5], [10, -1.5], [18.5, -1.5], [18.5, 0]],       [[0, 0], [18.5, 0]])
 extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
-
 
 outerSparLocations = [0.15, 0.6] # variable
 
@@ -237,12 +236,11 @@ extraSpars =                [1,     1,      0,      0,      0,      0,      0,  
 sparThicknesses =           [0.014, 0.013,  0.011,  0.009,  0.010,  0.008,   0.007,  0.005]  # m
 flangeThicknessesTop =      [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
 flangeThicknessesBottom =   [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
-stringersTop =              [35,    33,     31,     18,     15,     6,      3,      2] # m
-stringersBottom =           [26,    23,     21,     14,     10,     4,      3,      2] # m
+stringersTop =              [3,    33,     31,     18,     15,     6,      3,      2] # m
+stringersBottom =           [3,    23,     21,     14,     10,     4,      3,      2] # m
 
 
 wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom)
-
 
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
