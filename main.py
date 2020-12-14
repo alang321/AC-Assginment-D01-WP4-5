@@ -258,6 +258,8 @@ ribThickness = 0.005 # m, set this to the lowest skin thickness value
 
 wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom, ribThickness=ribThickness)
 
+print(wingbox.totalMass)
+
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
 wingbox.drawCrosssection(2.5, drawCentroid=True, drawSidewallCenterlines=True)
