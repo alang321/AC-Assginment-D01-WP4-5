@@ -36,7 +36,7 @@ class Wingbox:
         self.tipchord = self.rootchord * self.taperratio
         self.leadingedgeXPosTip = self.leadingEdgeXPos(self.semispan) # x position of the leading edge of the tip chord
 
-        self.__ribThickness = 1.5  # mm
+        self.__ribThickness = ribThickness
 
         #ribs
         self.ribLocations = []
@@ -303,7 +303,7 @@ class Wingbox:
 
         for i in range(len(self.ribLocations) - 1):
             stress_cr = 0.9 * AircraftProperties.Rivets["c"] * self.__E * (flangeThickness(maxCompStressPerSection[i][1])/self.__minRivetPitch)**2
-            if maxCompStressPerSection[i][0] <= stress_cr:
+            if maxCompStressPerSection[i][0] >= stress_cr:
                 print("Inter rivet buckling occurs in section", str(i), ". Allowable stress:", str(stress_cr), "[Pa]. Actual stress:", str(maxCompStressPerSection[i]), "[Pa]")
                 return True
 
