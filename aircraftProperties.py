@@ -134,6 +134,6 @@ class AircraftProperties:
     }
     Rivets = {
         "column minimum rivet pitch": 30, #mm, assumed value
-        "c": 2.1, #mm
+        "c": 2.1,
     }
 

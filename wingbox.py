@@ -19,7 +19,7 @@ class Wingbox:
     __E = AircraftProperties.WingboxMaterial["e modulus"]
     __G = AircraftProperties.WingboxMaterial["shear modulus"]
 
-    __minRivetPitch = AircraftProperties.WingboxMaterial["column minimum rivet pitch"]
+    __minRivetPitch = AircraftProperties.WingboxMaterial["column minimum rivet pitch"] / 1000 # m
 
 
     integrationLimit = 50
@@ -275,7 +275,7 @@ class Wingbox:
                     if reqPitch < minReqPitch[0]:
                         minReqPitch = [reqPitch, sectionIndex]
 
-        if minReqPitch[0] < self.__minRivetPitch/1000:
+        if minReqPitch[0] < self.__minRivetPitch:
             print("Minimumm required rivet pitch of", str(minReqPitch[0]*1000), "[mm] is lower than minimum allowable pitch of", str(self.__minRivetPitch), "[mm] in section", str(minReqPitch[1] + 1), ".")
             return True
 
