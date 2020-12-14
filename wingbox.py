@@ -21,7 +21,6 @@ class Wingbox:
 
     __minRivetPitch = AircraftProperties.WingboxMaterial["column minimum rivet pitch"]
 
-    __ribThickness = 1.5 # mm
 
     integrationLimit = 50
     integrationFidelity = 20
@@ -29,13 +28,15 @@ class Wingbox:
     #spar flange connection stringer should be the name basically with the orientation such aconnection stringer would have in the top right
     #stringers should be alist of lists = [[absstarty, absendy, relposx, stringerShape], [......], ...]
     #flange thickness should be list = [[[topt, bott], endposY], [[topt, bott]], endposY], .....], so first index starts at wingroot
-    def __init__(self, ribLocations, spars, stringersTop, stringersBottom, sparCapSide, sparCapCenter, flangeThicknesses, crosssectionAmount, wingLoading=WingLoads([], [None, None, None], [None, None, None])):
+    def __init__(self, ribLocations, spars, stringersTop, stringersBottom, sparCapSide, sparCapCenter, flangeThicknesses, crosssectionAmount, ribThickness, wingLoading=WingLoads([], [None, None, None], [None, None, None])):
         self.span = AircraftProperties.Planform["span"]
         self.semispan = self.span/2
         self.taperratio = AircraftProperties.Planform["taper ratio"]
         self.rootchord = AircraftProperties.Planform["root chord"]
         self.tipchord = self.rootchord * self.taperratio
         self.leadingedgeXPosTip = self.leadingEdgeXPos(self.semispan) # x position of the leading edge of the tip chord
+
+        self.__ribThickness = 1.5  # mm
 
         #ribs
         self.ribLocations = []
@@ -280,6 +281,35 @@ class Wingbox:
 
         return False
 
+    def checkInterRivetBuckling(self):
+        if self.wingLoading.getInternalMoment(0)(1) < 0:
+            flangeThickness = self.flangeThicknesses[0]
+        else:
+            flangeThickness = self.flangeThicknesses[1]
+
+        compressiveStressList = self.getMaximumCompressiveStressMagnitudeList()
+
+        maxCompStressPerSection = [[0, 0] for i in range(len(self.ribLocations))] # [stress, yLoc]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
+
+
+            stress = compressiveStressList[index]
+            if stress > maxCompStressPerSection[sectionIndex][0]:
+                maxCompStressPerSection[sectionIndex] = [stress, yLocation]
+
+        for i in range(len(self.ribLocations) - 1):
+            stress_cr = 0.9 * AircraftProperties.Rivets["c"] * self.__E * (flangeThickness(maxCompStressPerSection[i][1])/self.__minRivetPitch)**2
+            if maxCompStressPerSection[i] <= stress_cr:
+                print("Inter rivet buckling occurs in section", str(i), ". Allowable stress:", str(stress_cr), "[Pa]. Actual stress:", str(maxCompStressPerSection[i]), "[Pa]")
+                return True
+
+        return False
+
     #endregion
 
     def __getDistanceBetweenPoints(self, coord1, coord2):
@@ -300,7 +330,7 @@ class Wingbox:
         #rib contributions
         for i in self.ribLocations:
             for j in self.getGeneratedCrosssectionAtY(i).insidePolygons:
-                ribVolume = j.getArea() * (self.__ribThickness / 1000)
+                ribVolume = j.getArea() * self.__ribThickness
 
                 internal -= ribVolume
                 material += ribVolume

@@ -58,7 +58,7 @@ def plotWingLoading(loading):
     loading.drawInternalMoment(1)
 
 # amount stringers top, amount stringers bottom, endpoint
-def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stringerType, sparCapSide, sparCapCenter, outerSparLocations, extraSpars, sparThicknesses, flangeThicknessesTop, flangeThicknessesBottom):
+def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stringerType, sparCapSide, sparCapCenter, outerSparLocations, extraSpars, sparThicknesses, flangeThicknessesTop, flangeThicknessesBottom, ribThickness):
     #section starting y values
     sectionStartingLocations = [0]
     sectionStartingLocations.extend(sectionEndLocations)
@@ -140,7 +140,7 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
     flangeThicknessTopFunc = sp.interpolate.interp1d(sectionEndLocations, flangeThicknessesTop, kind='next', fill_value="extrapolate")
     flangeThicknessBottomFunc = sp.interpolate.interp1d(sectionEndLocations, flangeThicknessesBottom, kind='next', fill_value="extrapolate")
 
-    return Wingbox(ribLocations=[0, *sectionEndLocations], spars=sparsOutput, stringersTop=topStringersOutput, stringersBottom=bottomStringersOutput, sparCapSide=sparCapSide, sparCapCenter=sparCapCenter, flangeThicknesses=[flangeThicknessTopFunc, flangeThicknessBottomFunc], crosssectionAmount=200)
+    return Wingbox(ribLocations=[0, *sectionEndLocations], spars=sparsOutput, stringersTop=topStringersOutput, stringersBottom=bottomStringersOutput, sparCapSide=sparCapSide, sparCapCenter=sparCapCenter, ribThickness=ribThickness, flangeThicknesses=[flangeThicknessTopFunc, flangeThicknessBottomFunc], crosssectionAmount=200)
 
 def checkWingBox(loadingCases, wingbox):
     yieldStrength = AircraftProperties.WingboxMaterial["yield strength"]
@@ -175,6 +175,13 @@ def checkWingBox(loadingCases, wingbox):
                 return False
 
             if wingbox.checkColumnBuckling():
+                return False
+
+            if wingbox.checkInterRivetBuckling():
+                return False
+
+            if wingbox.jFuncY(28.06) > 7.7 * 10**-4:
+                print("Aileron reversal occurs")
                 return False
 
             #check normal stress
@@ -246,8 +253,10 @@ flangeThicknessesBottom =   [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.00
 stringersTop =              [35,    33,     31,     18,     15,     6,      3,      2] # m
 stringersBottom =           [25,    23,     21,     14,     10,     4,      3,      2] # m
 
+ribThickness = 0.005 # m, set this to the lowest skin thickness value
 
-wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom)
+
+wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom, ribThickness=ribThickness)
 
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
