@@ -162,7 +162,7 @@ def checkWingBox(loadingCases, wingbox):
             wingbox.wingLoading = loading[0]
 
             # plot loading cases
-            plotWingLoading(loading[0])
+            #plotWingLoading(loading[0])
 
             wingbox.drawMaximumTensileStress()
 
@@ -244,10 +244,10 @@ extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 outerSparLocations = [0.15, 0.6] # variable
 
-sectionEnds =               [2.5,   5,      8,      11,     15,     19.5,     24,   30] # m
+sectionEnds =               [2.5,   5,      8,      10.3,   15,     19.5,     24,   30] # m
 #per section
-extraSpars =                [1,     1,      0,      0,      0,      0,      0,      0] # m
-sparThicknesses =           [0.014, 0.013,  0.011,  0.009,  0.010,  0.008,   0.007,  0.005]  # m
+extraSpars =                [1,     1,      1,      1,      0,      0,      0,      0] # m
+sparThicknesses =           [0.01,  0.01,   0.01,   0.009,  0.010,  0.008,   0.007,  0.005]  # m
 flangeThicknessesTop =      [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
 flangeThicknessesBottom =   [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
 stringersTop =              [35,    33,     31,     18,     15,     6,      3,      2] # m

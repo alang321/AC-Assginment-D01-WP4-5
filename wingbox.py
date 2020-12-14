@@ -19,8 +19,6 @@ class Wingbox:
     __E = AircraftProperties.WingboxMaterial["e modulus"]
     __G = AircraftProperties.WingboxMaterial["shear modulus"]
 
-    __minRivetPitch = AircraftProperties.Rivets["column minimum rivet pitch"] / 1000 # m
-
 
     integrationLimit = 50
     integrationFidelity = 20
@@ -42,6 +40,18 @@ class Wingbox:
         self.ribLocations = []
         for i in ribLocations:
             self.ribLocations.append(min(self.semispan, i))
+
+        minThick = 100000
+        for i in self.ribLocations:
+            for j in range(2):
+                if flangeThicknesses[j](i) < minThick:
+                    minThick = flangeThicknesses[j](i)
+
+        self.minFlangeThickness = minThick
+        self.rivetHeadSize = self.minFlangeThickness * 0.9
+        self.__minRivetPitch = self.rivetHeadSize * 4
+
+        print(self.__minRivetPitch)
 
         self.ribLines = []
         for rib in self.ribLocations:
