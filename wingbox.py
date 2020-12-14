@@ -19,7 +19,7 @@ class Wingbox:
     __E = AircraftProperties.WingboxMaterial["e modulus"]
     __G = AircraftProperties.WingboxMaterial["shear modulus"]
 
-    __minRivetPitch = AircraftProperties.WingboxMaterial["column minimum rivet pitch"] / 1000 # m
+    __minRivetPitch = AircraftProperties.Rivets["column minimum rivet pitch"] / 1000 # m
 
 
     integrationLimit = 50
@@ -296,7 +296,6 @@ class Wingbox:
             for secIndex, loc in enumerate(self.ribLocations):
                 if yLocation >= loc:
                     sectionIndex = min(secIndex, len(self.ribLocations) - 2)
-
 
             stress = compressiveStressList[index]
             if stress > maxCompStressPerSection[sectionIndex][0]:
