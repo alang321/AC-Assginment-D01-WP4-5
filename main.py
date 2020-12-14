@@ -180,8 +180,8 @@ def checkWingBox(loadingCases, wingbox):
             if wingbox.checkInterRivetBuckling():
                 return False
 
-            if wingbox.jFuncY(28.06) > 7.7 * 10**-4:
-                print("Aileron reversal occurs")
+            if wingbox.jFuncY(28.06) <= 7.7 * 10**-4:
+                print("Aileron reversal occurs. J is", str(wingbox.jFuncY(28.06)), " but should be atleast", str(7.7 * 10**-4))
                 return False
 
             #check normal stress
