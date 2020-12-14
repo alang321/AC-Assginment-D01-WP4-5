@@ -51,8 +51,6 @@ class Wingbox:
         self.rivetHeadSize = self.minFlangeThickness * 0.9
         self.__minRivetPitch = self.rivetHeadSize * 4
 
-        print(self.__minRivetPitch)
-
         self.ribLines = []
         for rib in self.ribLocations:
             if rib <= self.semispan:
@@ -659,6 +657,7 @@ class Wingbox:
 
     def drawMaximumTensileStress(self):
         plt.title("Maximum Tensile Stress")
+        plt.hlines(self.__yieldStrength, 0, self.semispan, color="red")
         plt.plot(self.crossectionYLocations, self.getMaximumTensileStressList())
         plt.xlabel('semi-span [m]')
         plt.ylabel('stress [Pa]')
@@ -667,7 +666,8 @@ class Wingbox:
 
     def drawMaximumNormalStress(self):
         plt.title("Maximum Normal Stress")
-        plt.plot(self.crossectionYLocations, [max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i]) for i in self.crossectionYLocations])
+        plt.hlines(self.__yieldStrength, 0, self.semispan, color="red")
+        plt.plot(self.crossectionYLocations, [max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i]) for i in range(len(self.crossectionYLocations))])
         plt.xlabel('semi-span [m]')
         plt.ylabel('stress [Pa]')
 
@@ -675,6 +675,7 @@ class Wingbox:
 
     def drawNormalStressSafetyMargin(self):
         plt.title("Normal Stress Safety Margin")
+        plt.hlines(1, 0, self.semispan, color="red")
         plt.plot(self.crossectionYLocations, [self.__yieldStrength/max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i]) for i in self.crossectionYLocations])
         plt.xlabel('semi-span [m]')
         plt.ylabel('safety-margin [-]')
@@ -683,6 +684,7 @@ class Wingbox:
 
     def drawEdgeCrackSafetyMargin(self):
         plt.title("Edge Crack Safety Margin")
+        plt.hlines(1, 0, self.semispan, color="red")
         edgecrackStrength = AircraftProperties.WingboxMaterial["edge crack strength"]
         plt.plot(self.crossectionYLocations, [edgecrackStrength/i for i in self.getMaximumTensileStressList()])
         plt.xlabel('semi-span [m]')
@@ -692,6 +694,7 @@ class Wingbox:
 
     def drawCenterCrackSafetyMargin(self):
         plt.title("Center Crack Safety Margin")
+        plt.hlines(1, 0, self.semispan, color="red")
         centercrackStrength = AircraftProperties.WingboxMaterial["center crack strength"]
         plt.plot(self.crossectionYLocations, [centercrackStrength/i for i in self.getMaximumTensileStressList()])
         plt.xlabel('semi-span [m]')

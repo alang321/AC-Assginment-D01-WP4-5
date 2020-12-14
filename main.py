@@ -164,7 +164,7 @@ def checkWingBox(loadingCases, wingbox):
             # plot loading cases
             #plotWingLoading(loading[0])
 
-            wingbox.drawMaximumTensileStress()
+            wingbox.drawMaximumNormalStress()
 
             wingbox.drawMaxShearStress()
 
@@ -244,14 +244,14 @@ extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 outerSparLocations = [0.15, 0.6] # variable
 
-sectionEnds =               [2.5,   5,      8,      10.3,   15,     19.5,     24,   30] # m
+sectionEnds =               [2.5,   5,      8,      10.3,   14,     18.5,     24,   30] # m
 #per section
 extraSpars =                [1,     1,      1,      1,      0,      0,      0,      0] # m
-sparThicknesses =           [0.01,  0.01,   0.01,   0.009,  0.010,  0.008,   0.007,  0.005]  # m
-flangeThicknessesTop =      [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
-flangeThicknessesBottom =   [0.016, 0.015,  0.014,  0.013,  0.011,  0.009,  0.008,  0.006] # m
-stringersTop =              [35,    33,     31,     18,     15,     6,      3,      2] # m
-stringersBottom =           [25,    23,     21,     14,     10,     4,      3,      2] # m
+sparThicknesses =           [0.007, 0.007,  0.007,  0.007,  0.007,  0.007,  0.004,  0.003]  # m
+flangeThicknessesTop =      [0.0145,0.0135, 0.012,  0.010,  0.010,  0.009,  0.004,  0.003] # m
+flangeThicknessesBottom =   [0.0145,0.0135, 0.012,  0.010,  0.010,  0.009,  0.004,  0.003] # m
+stringersTop =              [35,    33,     32,     19,     16,     5,      1,      0] # m
+stringersBottom =           [25,    23,     22,     15,     11,     3,      1,      0] # m
 
 ribThickness = 0.005 # m, set this to the lowest skin thickness value
 
