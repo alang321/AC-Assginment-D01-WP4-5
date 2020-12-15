@@ -272,7 +272,7 @@ class Wingbox:
 
             stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
 
-            minReqPitch = -1
+            minReqPitch = self.semispan
             for index, stringer in enumerate(stringerPolygons):
                 for j in range(2):
                     stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0, x=stringer.referencePoints[j][0], z=stringer.referencePoints[j][1])

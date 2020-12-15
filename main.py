@@ -181,7 +181,7 @@ def checkWingBox(loadingCases, wingbox):
                 return False
 
             if wingbox.jFuncY(28.06) <= 7.7 * 10**-4:
-                print("Aileron reversal occurs. J is", str(wingbox.jFuncY(28.06)), " but should be atleast", str(7.7 * 10**-4))
+                print("Aileron reversal occurs. J is", str(wingbox.jFuncY(28.06)), "at", str(28.06), "[m] but should be atleast", str(7.7 * 10**-4))
                 return False
 
             #check normal stress
@@ -242,14 +242,14 @@ extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 outerSparLocations = [0.15, 0.6] # variable
 
-sectionEnds =               [2,       4,      6,      8,      10.3,     12.6,   15,     18,     21,     24.5,   30] # m
+sectionEnds =               [2,       4,      6,      8,      10.3,     12.6,   15,     17.5,   20,     22.5,   25.5,   30] # m
 #per section
-extraSpars =                [1,       1,      1,      1,      1,        0,      0,      0,      0,      0,      0] # m
-sparThicknesses =           [0.006,   0.006,  0.006,  0.006,  0.006,    0.0075, 0.007,  0.006,  0.003,  0.002,  0.002]  # m
-flangeThicknessesTop =      [0.0145,  0.0133, 0.0123, 0.0123, 0.0105,   0.0108, 0.009,  0.0065, 0.004,  0.002,  0.002] # m
-flangeThicknessesBottom =   [0.0145,  0.0133, 0.012,  0.012,  0.0104,   0.0107, 0.009,  0.0065, 0.004,  0.002,  0.002] # m
-stringersTop =              [35,      31,     26,     26,     18,       14,     11,     7,      4,      1,      0] # m
-stringersBottom =           [25,      21,     16,     16,     14,       10,     6,      6,      3,      1,      0] # m
+extraSpars =                [1,       1,      1,      1,      1,        0,      0,      0,      0,      0,      0,      0] # m
+sparThicknesses =           [0.007,   0.007,  0.007,  0.006,  0.006,    0.0073, 0.007,  0.006,  0.0045, 0.0045, 0.0045, 0.0045]  # m
+flangeThicknessesTop =      [0.015,   0.0142, 0.0132, 0.0112, 0.0105,   0.010,  0.009,  0.0065, 0.0049, 0.003,  0.003,  0.003] # m
+flangeThicknessesBottom =   [0.015,   0.0142, 0.0132, 0.0112, 0.0104,   0.010,  0.009,  0.0065, 0.0049, 0.003,  0.003,  0.003] # m
+stringersTop =              [35,      30,     26,     26,     18,       16,     11,     7,      3,      1,      1,      0] # m
+stringersBottom =           [25,      20,     16,     16,     14,       12,     6,      6,      2,      1,      0,      0] # m
 
 ribThickness = 0.003 # m, set this to the lowest skin thickness value
 
