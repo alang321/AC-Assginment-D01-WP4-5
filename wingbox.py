@@ -200,6 +200,7 @@ class Wingbox:
             stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
             stringerTypes = crossection.stringers[stringerSideIndex]
             skipNext = False
+
             for index in range(1, len(stringerPolygons)):
                 if skipNext:
                     skipNext = False
