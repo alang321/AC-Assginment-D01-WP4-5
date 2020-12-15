@@ -180,7 +180,7 @@ class Wingbox:
 
         compressiveStressList = self.getMaximumCompressiveStressMagnitudeList()
 
-        maxCompForcePerSection = [0] * (len(self.ribLocations) - 1)
+        maxCompStressPerSection = [0] * (len(self.ribLocations) - 1)
 
         for index, yLocation in enumerate(self.crossectionYLocations):
             sectionIndex = -1
@@ -188,14 +188,8 @@ class Wingbox:
                 if yLocation >= loc:
                     sectionIndex = min(secIndex, len(self.ribLocations) - 2)
 
-            #get flange area
-            wingboxEdgesPolygon = self.getGeneratedCrosssectionAtY(yLocation).outsidePolygon
-
-            flangeArea = ((wingboxEdgesPolygon.coords[cornerCoords[0]][0] - wingboxEdgesPolygon.coords[cornerCoords[1]][0])**2 + (wingboxEdgesPolygon.coords[cornerCoords[0]][1] - wingboxEdgesPolygon.coords[cornerCoords[1]][1])**2)**0.5 * flangeThickness(yLocation)
-
-            force = compressiveStressList[index] * flangeArea
-            if force > maxCompForcePerSection[sectionIndex]:
-                maxCompForcePerSection[sectionIndex] = force
+            if compressiveStressList[index] > maxCompStressPerSection[sectionIndex]:
+                maxCompStressPerSection[sectionIndex] = compressiveStressList[index]
 
         for sectionIndex in range(len(self.ribLocations) - 1):
             #a per section
@@ -237,12 +231,12 @@ class Wingbox:
 
                 #checl if buckling
                 kc = kcFunc(a / b)
-                F_cr = ((np.pi**2 * kc * self.__E) / (12 * (1 - self.__poissons**2))) * (t / b) ** 2
+                stress_cr = ((np.pi**2 * kc * self.__E) / (12 * (1 - self.__poissons**2))) * (t / b) ** 2
 
-                if maxCompForcePerSection[sectionIndex] > F_cr:
+                if maxCompStressPerSection[sectionIndex] > stress_cr:
                     print("Skin Buckling occurs in section", str(sectionIndex + 1), "from root. Between stringers (including spar caps, starting at 1):", str(index), "and", str(index + 1),
-                          "from left. Distance", str(b), "[m]. Max comp Force in that sheet:", str(maxCompForcePerSection[sectionIndex]),
-                          "[N].  Maximum allowable Force:", str(F_cr), "[N]")
+                          "from left. Distance", str(b), "[m]. Max comp stress in that sheet:", str(maxCompStressPerSection[sectionIndex]),
+                          "[Pa].  Maximum allowable Stress:", str(stress_cr), "[Pa]")
                     return True
         return False
 
