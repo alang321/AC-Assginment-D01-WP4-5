@@ -229,7 +229,7 @@ class Wingbox:
                 # b
                 b = self.__getDistanceBetweenPoints(stringerPolygons[indeces[1]].referencePoints[3], stringerPolygons[indeces[0]].referencePoints[3])
 
-                #checl if buckling
+                #check if buckling
                 kc = kcFunc(a / b)
                 stress_cr = ((np.pi**2 * kc * self.__E) / (12 * (1 - self.__poissons**2))) * (t / b) ** 2
 
@@ -270,7 +270,8 @@ class Wingbox:
             for index, stringer in enumerate(stringerPolygons):
                 for j in range(2):
                     stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0, x=stringer.referencePoints[j][0], z=stringer.referencePoints[j][1])
-                    reqPitch = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(stress)))**0.5
+                    force = stress * stringer.getArea()
+                    reqPitch = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(force)))**0.5
                     if reqPitch < minReqPitch:
                         minReqPitch = reqPitch
 
