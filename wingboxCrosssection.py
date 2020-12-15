@@ -436,7 +436,7 @@ class WingboxCrossection:
         plt.show()
 
     def drawCrosssection(self, drawSidewallCenterlines=False, drawCentroid=False, drawBendingStress=False, Mx=None, Mz=0):
-        plt.clf()
+        plt.figure()
 
         if drawBendingStress:
             if Mx is not None:

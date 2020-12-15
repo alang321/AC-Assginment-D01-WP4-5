@@ -280,6 +280,8 @@ class Wingbox:
                     if reqPitch < minReqPitch:
                         minReqPitch = reqPitch
 
+            #print(sectionIndex, "Column Buckling")
+            #print(minReqPitch, "<", self.minRivetPitch[stringerSideIndex][sectionIndex])
             if minReqPitch < self.minRivetPitch[stringerSideIndex][sectionIndex]:
                 print("Required rivet pitch for Column Buckling of", str(minReqPitch*1000), "[mm] is lower than minimum allowable pitch of", str(self.minRivetPitch[stringerSideIndex][sectionIndex] * 1000), "[mm] in section", str(sectionIndex + 1), ".")
                 return True
@@ -442,6 +444,7 @@ class Wingbox:
         return crosssections
 
     def getGeneratedCrosssectionAtY(self, yPos):
+        yPos = max(0, yPos)
         i = min(int((yPos * self.crosssectionAmount)/self.semispan), self.crosssectionAmount - 1)
         return self.crosssecctions[i]
 
@@ -597,38 +600,46 @@ class Wingbox:
 
         return [front, aft]
 
-    def draw(self, drawTopStringers=True, drawBottomStringers=True):
-        plt.clf()
+    #region drawing
 
+    def draw(self, drawTopStringers=True, drawBottomStringers=True, clickable=True):
+        fig, ax = plt.subplots(1)
 
         #Planform
         rotatedPlanform = self.planformPolygon.getRotatedPolygon(np.deg2rad(90))
         rotatedPlanform = rotatedPlanform.getTranslatedPolygon([-rotatedPlanform.coords[1][i] for i in range(2)])
-        rotatedPlanform.addToPlot(plt, color="red")
+        rotatedPlanform.addToPlot(ax, color="red")
 
         #draw ribs
         for ribline in self.ribLines:
-            plt.plot(ribline[1], ribline[0], color="black")
+            ax.plot(ribline[1], ribline[0], color="black")
 
         #draw spars
         for sparLine in self.sparLines:
-            plt.plot(sparLine[1], sparLine[0], color="blue")
+            ax.plot(sparLine[1], sparLine[0], color="blue")
 
         #draw stringers
         if drawTopStringers:
             for stringer in self.stringerLines[0]:
-                plt.plot(stringer[1], stringer[0], color="green")
+                ax.plot(stringer[1], stringer[0], color="green")
 
         if drawBottomStringers:
             for stringer in self.stringerLines[1]:
-                plt.plot(stringer[1], stringer[0], color="pink")
+                ax.plot(stringer[1], stringer[0], color="pink")
 
         # x, y ranges and same scale
-        plt.ylim(-0.05*self.rootchord, 1.05 * self.rootchord)
-        plt.xlim(-0.05 * self.semispan, 1.05 * self.semispan)
-        plt.gca().set_aspect('equal', adjustable='box')
+        ax.set_ylim(-0.05*self.rootchord, 1.05 * self.rootchord)
+        ax.set_xlim(-0.05 * self.semispan, 1.05 * self.semispan)
+        ax.axis('equal')
+
+        if clickable:
+            fig.canvas.mpl_connect('button_press_event', self.onclick)
 
         plt.show()
+
+    def onclick(self, event):
+        if event.button == 1:
+            self.getGeneratedCrosssectionAtY(event.xdata).drawCrosssection()
 
     def drawCrosssection(self, posY, drawSidewallCenterlines=False, drawCentroid=False, drawBendingStress=False):
         self.getGeneratedCrosssectionAtY(posY).drawCrosssection(drawSidewallCenterlines, drawCentroid, drawBendingStress, Mx=self.wingLoading.getInternalMoment(0)(posY), Mz=0)
@@ -822,5 +833,6 @@ class Wingbox:
 
         plt.show()
 
+    #endregion
 
 
