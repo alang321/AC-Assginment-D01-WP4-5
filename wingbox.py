@@ -659,7 +659,7 @@ class Wingbox:
 
     def drawMaximumTensileStress(self):
         plt.title("Maximum Tensile Stress")
-        plt.hlines(self.__yieldStrength, 0, self.semispan, color="red")
+        plt.hlines(self.__yieldStrength / 1000000, 0, self.semispan, color="red")
         tensileFUnc = self.getMaximumTensileStressList()
         plt.plot(self.crossectionYLocations, [i/1000000 for i in tensileFUnc])
         plt.xlabel('semi-span [m]')
@@ -669,7 +669,7 @@ class Wingbox:
 
     def drawMaximumNormalStress(self):
         plt.title("Maximum Normal Stress")
-        plt.hlines(self.__yieldStrength, 0, self.semispan, color="red")
+        plt.hlines(self.__yieldStrength / 1000000, 0, self.semispan, color="red")
         plt.plot(self.crossectionYLocations, [max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i])/1000000 for i in range(len(self.crossectionYLocations))])
         plt.xlabel('semi-span [m]')
         plt.ylabel('stress [MPa]')
