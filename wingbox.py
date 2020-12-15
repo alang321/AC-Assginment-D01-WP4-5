@@ -34,22 +34,20 @@ class Wingbox:
         self.tipchord = self.rootchord * self.taperratio
         self.leadingedgeXPosTip = self.leadingEdgeXPos(self.semispan) # x position of the leading edge of the tip chord
 
-        self.__ribThickness = ribThickness
+        self.ribThickness = ribThickness
+        self.flangeThicknesses = flangeThicknesses
 
         #ribs
         self.ribLocations = []
         for i in ribLocations:
             self.ribLocations.append(min(self.semispan, i))
 
-        minThick = 100000
-        for i in self.ribLocations:
+        self.minRivetPitch = [[], []]
+        for i in ribLocations[1:]:
             for j in range(2):
-                if flangeThicknesses[j](i) < minThick:
-                    minThick = flangeThicknesses[j](i)
-
-        self.minFlangeThickness = minThick
-        self.rivetHeadSize = self.minFlangeThickness * 0.9
-        self.__minRivetPitch = self.rivetHeadSize * 4
+                rivetHeadSize = self.flangeThicknesses[j](i) * 0.9
+                minRivetPitch = rivetHeadSize * 4
+                self.minRivetPitch[j].append(minRivetPitch)
 
         self.ribLines = []
         for rib in self.ribLocations:
@@ -259,8 +257,6 @@ class Wingbox:
 
         maxInternalMomentPerSection = [[0, 0] for i in range(len(self.ribLocations))] # [yLoc, Mx]
 
-        minReqPitch = [self.semispan, -1] # [pitch, sectionId]
-
         for index, yLocation in enumerate(self.crossectionYLocations):
             sectionIndex = -1
             for secIndex, loc in enumerate(self.ribLocations):
@@ -276,24 +272,27 @@ class Wingbox:
 
             stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
 
+            minReqPitch = -1
             for index, stringer in enumerate(stringerPolygons):
                 for j in range(2):
                     stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0, x=stringer.referencePoints[j][0], z=stringer.referencePoints[j][1])
                     reqPitch = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(stress)))**0.5
-                    if reqPitch < minReqPitch[0]:
-                        minReqPitch = [reqPitch, sectionIndex]
+                    if reqPitch < minReqPitch:
+                        minReqPitch = reqPitch
 
-        if minReqPitch[0] < self.__minRivetPitch:
-            print("Minimumm required rivet pitch of", str(minReqPitch[0]*1000), "[mm] is lower than minimum allowable pitch of", str(self.__minRivetPitch), "[mm] in section", str(minReqPitch[1] + 1), ".")
-            return True
+            if minReqPitch < self.minRivetPitch[stringerSideIndex][sectionIndex]:
+                print("Required rivet pitch for Column Buckling of", str(minReqPitch*1000), "[mm] is lower than minimum allowable pitch of", str(self.minRivetPitch[stringerSideIndex][sectionIndex] * 1000), "[mm] in section", str(sectionIndex + 1), ".")
+                return True
 
         return False
 
     def checkInterRivetBuckling(self):
         if self.wingLoading.getInternalMoment(0)(1) < 0:
             flangeThickness = self.flangeThicknesses[0]
+            side = 0
         else:
             flangeThickness = self.flangeThicknesses[1]
+            side = 1
 
         compressiveStressList = self.getMaximumCompressiveStressMagnitudeList()
 
@@ -310,9 +309,12 @@ class Wingbox:
                 maxCompStressPerSection[sectionIndex] = [stress, yLocation]
 
         for i in range(len(self.ribLocations) - 1):
-            stress_cr = 0.9 * AircraftProperties.Rivets["c"] * self.__E * (flangeThickness(maxCompStressPerSection[i][1])/self.__minRivetPitch)**2
-            if maxCompStressPerSection[i][0] >= stress_cr:
-                print("Inter rivet buckling occurs in section", str(i), ". Allowable stress:", str(stress_cr), "[Pa]. Actual stress:", str(maxCompStressPerSection[i]), "[Pa]")
+            reqRivetPitch =  flangeThickness(maxCompStressPerSection[i][1])/(maxCompStressPerSection[i][0] / (0.9 * AircraftProperties.Rivets["c"] * self.__E)) ** 0.5
+            if reqRivetPitch < self.minRivetPitch[side][i]:
+                print("Required rivet pitch for Inter Rivet Buckling of", str(reqRivetPitch * 1000),
+                      "[mm] is lower than minimum allowable pitch of",
+                      str(self.minRivetPitch[side][i] * 1000), "[mm] in section",
+                      str(i + 1), ".")
                 return True
 
         return False
@@ -337,7 +339,7 @@ class Wingbox:
         #rib contributions
         for i in self.ribLocations:
             for j in self.getGeneratedCrosssectionAtY(i).insidePolygons:
-                ribVolume = j.getArea() * self.__ribThickness
+                ribVolume = j.getArea() * self.ribThickness
 
                 internal -= ribVolume
                 material += ribVolume
@@ -748,7 +750,7 @@ class Wingbox:
         yLabels = [r"$\tau_{front}$ [Pa]", r"$\tau_{aft}$ [Pa]"]
         data = self.getMaximumShearStressList()
 
-        fig, plots = plt.subplots(1, 2)
+        fig, plots = plt.subplots(2, 1)
         fig.suptitle("Max Shear Stress Magnitude")
         for col in range(2):
             plots[col].plot(self.crossectionYLocations, data[col])

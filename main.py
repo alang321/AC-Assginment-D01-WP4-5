@@ -224,8 +224,6 @@ fuelFactor = 0.0
 
 loadFactor2 = -1
 
-thrustlevels = [0.0, 1.0]
-
 loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitude, loadFactor2, fuelFactor]]
 
 #wingbox definition start
@@ -244,32 +242,36 @@ extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 outerSparLocations = [0.15, 0.6] # variable
 
-sectionEnds =               [2.5,   5,      8,      10.3,   14,     18.5,     24,   30] # m
+sectionEnds =               [2,       4,      6,      8,      10.3,     12.6,   15,     18,     21,     24.5,   30] # m
 #per section
-extraSpars =                [1,     1,      1,      1,      0,      0,      0,      0] # m
-sparThicknesses =           [0.007, 0.007,  0.007,  0.007,  0.007,  0.007,  0.004,  0.003]  # m
-flangeThicknessesTop =      [0.0145,0.0135, 0.012,  0.010,  0.010,  0.009,  0.004,  0.003] # m
-flangeThicknessesBottom =   [0.0145,0.0135, 0.012,  0.010,  0.010,  0.009,  0.004,  0.003] # m
-stringersTop =              [35,    33,     32,     19,     16,     5,      1,      0] # m
-stringersBottom =           [25,    23,     22,     15,     11,     3,      1,      0] # m
+extraSpars =                [1,       1,      1,      1,      1,        0,      0,      0,      0,      0,      0] # m
+sparThicknesses =           [0.006,   0.006,  0.006,  0.006,  0.006,    0.0075, 0.007,  0.006,  0.003,  0.002,  0.002]  # m
+flangeThicknessesTop =      [0.0145,  0.0133, 0.0123, 0.0123, 0.0105,   0.0108, 0.009,  0.0065, 0.004,  0.002,  0.002] # m
+flangeThicknessesBottom =   [0.0145,  0.0133, 0.012,  0.012,  0.0104,   0.0107, 0.009,  0.0065, 0.004,  0.002,  0.002] # m
+stringersTop =              [35,      31,     26,     26,     18,       14,     11,     7,      4,      1,      0] # m
+stringersBottom =           [25,      21,     16,     16,     14,       10,     6,      6,      3,      1,      0] # m
 
-ribThickness = 0.005 # m, set this to the lowest skin thickness value
+ribThickness = 0.003 # m, set this to the lowest skin thickness value
 
 
 wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom, ribThickness=ribThickness)
 
+
 print(wingbox.totalMass)
+print("Fuel Volume:", wingbox.internalVolume)
 
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
 wingbox.drawCrosssection(2.5, drawCentroid=True, drawSidewallCenterlines=True)
 wingbox.getGeneratedCrosssectionAtY(2.5).getMaxShearStress(0, 0)
-#wingbox.drawInertias()
+wingbox.drawInertias()
 
 if checkWingBox(loadCases, wingbox):
     print("YAY it worked")
     print("Mass:", wingbox.totalMass, "kg")
+    print("Fuel Volume:", wingbox.internalVolume)
 else:
     print("Doesnt work")
     print("Mass:", wingbox.totalMass, "kg")
+    print("Fuel Volume:", wingbox.internalVolume)
 
