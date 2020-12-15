@@ -257,6 +257,10 @@ ribThickness = 0.003 # m, set this to the lowest skin thickness value
 wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom, ribThickness=ribThickness)
 
 
+wingbox.drawMinimumRivetPitch()
+wingbox.drawFlangeThickness()
+wingbox.drawSparThickness()
+
 print(wingbox.totalMass)
 print("Fuel Volume:", wingbox.internalVolume)
 

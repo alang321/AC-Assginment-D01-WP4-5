@@ -660,18 +660,19 @@ class Wingbox:
     def drawMaximumTensileStress(self):
         plt.title("Maximum Tensile Stress")
         plt.hlines(self.__yieldStrength, 0, self.semispan, color="red")
-        plt.plot(self.crossectionYLocations, self.getMaximumTensileStressList())
+        tensileFUnc = self.getMaximumTensileStressList()
+        plt.plot(self.crossectionYLocations, [i/1000000 for i in tensileFUnc])
         plt.xlabel('semi-span [m]')
-        plt.ylabel('stress [Pa]')
+        plt.ylabel('stress [MPa]')
 
         plt.show()
 
     def drawMaximumNormalStress(self):
         plt.title("Maximum Normal Stress")
         plt.hlines(self.__yieldStrength, 0, self.semispan, color="red")
-        plt.plot(self.crossectionYLocations, [max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i]) for i in range(len(self.crossectionYLocations))])
+        plt.plot(self.crossectionYLocations, [max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i])/1000000 for i in range(len(self.crossectionYLocations))])
         plt.xlabel('semi-span [m]')
-        plt.ylabel('stress [Pa]')
+        plt.ylabel('stress [MPa]')
 
         plt.show()
 
@@ -745,17 +746,79 @@ class Wingbox:
 
         plt.show()
 
-
     def drawMaxShearStress(self):
-        yLabels = [r"$\tau_{front}$ [Pa]", r"$\tau_{aft}$ [Pa]"]
+        yLabels = [r"$\tau_{front}$ [MPa]", r"$\tau_{aft}$ [MPa]"]
         data = self.getMaximumShearStressList()
 
         fig, plots = plt.subplots(2, 1)
         fig.suptitle("Max Shear Stress Magnitude")
         for col in range(2):
-            plots[col].plot(self.crossectionYLocations, data[col])
+            plots[col].plot(self.crossectionYLocations, [i/1000000 for i in data[col]])
             plots[col].set(ylabel=yLabels[col], xlabel='semi-span [m]')
         fig.tight_layout(pad=1.5)
+
+        plt.show()
+
+    def drawMinimumRivetPitch(self):
+        yLabels = [r"top min pitch [mm]", r"bottom min pitch [mm]"]
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+        xVals = doubledList[1:-1]
+
+
+        fig, plots = plt.subplots(2, 1)
+        fig.suptitle("Flange Minimum Rivet Pitch")
+        for col in range(2):
+            yVals = []
+            for i in range(len(self.ribLocations) - 1):
+                for j in range(2):
+                    yVals.append(self.minRivetPitch[col][i] * 1000)
+            plots[col].plot(xVals, yVals)
+            plots[col].set(ylabel=yLabels[col], xlabel='semi-span [m]')
+        fig.tight_layout(pad=1.5)
+
+        plt.show()
+
+    def drawFlangeThickness(self):
+        yLabels = [r"top [mm]", r"bottom [mm]"]
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+        xVals = doubledList[1:-1]
+
+        fig, plots = plt.subplots(2, 1)
+        fig.suptitle("Flange thicknesses")
+        for col in range(2):
+            yVals = []
+            for i in doubledList:
+                yVals.append(self.flangeThicknesses[col](i) * 1000)
+            plots[col].plot(xVals, yVals[2:])
+            plots[col].set(ylabel=yLabels[col], xlabel='semi-span [m]')
+        fig.tight_layout(pad=1.5)
+
+        plt.show()
+
+    def drawSparThickness(self):
+        plt.title("Spar Thicknesses")
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+        xVals = doubledList[1:-1]
+        yVals = []
+        for i in doubledList:
+            yVals.append(self.spars[0][3](i) * 1000)
+
+        plt.plot(xVals, yVals[2:])
+
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'thickness [mm]')
 
         plt.show()
 
