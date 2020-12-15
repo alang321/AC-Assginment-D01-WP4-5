@@ -94,8 +94,8 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
             if i == cells - 1:
                 aftlength = sparCapSide.baseLength
 
-            start = outerSparLocations[0] + (sparDistance/(extraSpars[sectionIndex] + 1)) * i + frontlength/chordAtMedian
-            end = outerSparLocations[0] + (sparDistance/(extraSpars[sectionIndex] + 1)) * (i + 1) - aftlength/chordAtMedian
+            start = outerSparLocations[0] + (sparDistance/(extraSpars[sectionIndex] + 1)) * i + frontlength/chordAtMedian - stringerTypeTop.baseLength/2/chordAtMedian
+            end = outerSparLocations[0] + (sparDistance/(extraSpars[sectionIndex] + 1)) * (i + 1) - aftlength/chordAtMedian + stringerTypeTop.baseLength/2/chordAtMedian
 
             for stringerIndex in range(stringersPerCell[i]):
                 topStringersOutput.append([sectionStartingLocations[sectionIndex], sectionEndLocations[sectionIndex], start + (end - start)/(stringersPerCell[i] + 1) * (stringerIndex + 1), stringerTypeTop])
@@ -123,8 +123,8 @@ def wingboxLayoutHelper(sectionEndLocations, stringersTop, stringersBottom, stri
             if i == cells - 1:
                 aftlength = sparCapSide.baseLength
 
-            start = outerSparLocations[0] + (sparDistance / (extraSpars[sectionIndex] + 1)) * i + frontlength / chordAtMedian
-            end = outerSparLocations[0] + (sparDistance / (extraSpars[sectionIndex] + 1)) * (i + 1) - aftlength / chordAtMedian
+            start = outerSparLocations[0] + (sparDistance / (extraSpars[sectionIndex] + 1)) * i + frontlength / chordAtMedian - stringerTypeBottom.baseLength/2/chordAtMedian
+            end = outerSparLocations[0] + (sparDistance / (extraSpars[sectionIndex] + 1)) * (i + 1) - aftlength / chordAtMedian + stringerTypeBottom.baseLength/2/chordAtMedian
 
             for stringerIndex in range(stringersPerCell[i]):
                 bottomStringersOutput.append([sectionStartingLocations[sectionIndex], sectionEndLocations[sectionIndex],start + (end - start) / (stringersPerCell[i] + 1) * (stringerIndex + 1), stringerTypeBottom])
