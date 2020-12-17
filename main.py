@@ -164,9 +164,12 @@ def checkWingBox(loadingCases, wingbox):
             # plot loading cases
             #plotWingLoading(loading[0])
 
-            wingbox.drawMaximumNormalStress()
+            wingbox.drawNormalStressSafetyMargin()
 
-            wingbox.drawMaxShearStress()
+            wingbox.drawShearWebBucklingSafetyMargin()
+            wingbox.drawFlangeBucklingSafetyMargin()
+            wingbox.drawColumnBucklingSafetyMargin()
+            wingbox.drawInterRivetBucklingSafetyMargin()
 
             if wingbox.checkFlangeBuckling():
                 return False
@@ -228,6 +231,7 @@ loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitud
 
 #wingbox definition start
 
+
 scale = 8
 sideCap = StringerType([[0, 0], [0, -2], [18, -2], [18, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]], rivetPoints=[[4, 0]], isSparCap=True)
 sideCap = sideCap.getScaledStringer(1/1000 * scale)
@@ -260,6 +264,7 @@ wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stri
 wingbox.drawMinimumRivetPitch()
 wingbox.drawFlangeThickness()
 wingbox.drawSparThickness()
+wingbox.drawCombinedSparThickness()
 
 print(wingbox.totalMass)
 print("Fuel Volume:", wingbox.internalVolume)

@@ -48,21 +48,6 @@ class Polygon:
             self.__ixz = self.__calcProductInertia()
         return self.__ixz
 
-    def addToPlot(self, plt, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False):
-        # plot point indices, should be in counter clockwise order for inertia to work
-        if drawPointIndices:
-            for index, point in enumerate(self.coords):
-                plt.annotate(index, point)
-
-        if drawRefPoints:
-            for point in self.referencePoints:
-                plt.plot(point[0], point[1], marker='o', color=color)
-
-        coord = self.coords.copy()
-        coord.append(coord[0])  # close polygon
-        xlist, yList = zip(*coord)  # lists of x and y values
-        plt.plot(xlist, yList, color=color, linestyle=linestyle, linewidth=linewidth)
-
     def getMirroredPolygonX(self):
         transMatrix = [[1, 0],
                        [0, -1]]
@@ -237,16 +222,32 @@ class Polygon:
 
         return inertia
 
-    def draw(self, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False, drawCentroid=False):
+    def draw(self, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False, drawCentroid=False, centroidText=True):
+
+        plt.gca().set_aspect('equal', adjustable='box')
+        self.addToPlot(plt, color=color, drawRefPoints=drawRefPoints, drawPointIndices=drawPointIndices, drawCentroid=drawCentroid, centroidText=centroidText, linestyle=linestyle, linewidth=linewidth)
+        plt.show()
+
+    def addToPlot(self, plt, color="red", linestyle="solid", linewidth=1.0, drawPointIndices=False, drawRefPoints=False, drawCentroid=False, centroidText=True):
+        # plot point indices, should be in counter clockwise order for inertia to work
+        if drawPointIndices:
+            for index, point in enumerate(self.coords):
+                plt.annotate(index, point)
+
+        if drawRefPoints:
+            for point in self.referencePoints:
+                plt.plot(point[0], point[1], marker='o', color=color)
 
         # draw centroid
         if drawCentroid:
             plt.plot(self.getCentroid()[0], self.getCentroid()[1], marker='o', color="red", markersize=3)
-            plt.annotate("Centroid", self.getCentroid(), color=color)
+            if centroidText:
+                plt.annotate("Centroid", self.getCentroid(), color=color)
 
-        plt.gca().set_aspect('equal', adjustable='box')
-        self.addToPlot(plt, color=color, drawRefPoints=drawRefPoints, drawPointIndices=drawPointIndices, linestyle=linestyle, linewidth=linewidth)
-        plt.show()
+        coord = self.coords.copy()
+        coord.append(coord[0])  # close polygon
+        xlist, yList = zip(*coord)  # lists of x and y values
+        plt.plot(xlist, yList, color=color, linestyle=linestyle, linewidth=linewidth)
 
 # a stringer class with some extra properties to the polygon class, this class is created with a stringer shape and an attachment point, this is then sort of a blue print for further stringers called with the function
 class StringerType:

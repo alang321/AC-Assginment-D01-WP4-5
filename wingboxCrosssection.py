@@ -310,20 +310,19 @@ class WingboxCrossection:
         Q = 0
 
         outsideCut = self.outsidePolygon.getCutByY(self.centroid[1], getTop=True)
-        #outsideCut.addToPlot(plt)
+        #outsideCut.addToPlot(plt, drawCentroid=True, centroidText=False)
         Q += abs(outsideCut.getCentroid()[1] - self.centroid[1]) * outsideCut.getArea()
 
         for i in self.insidePolygons:
             cut = i.getCutByY(self.centroid[1], getTop=True)
-            #cut.addToPlot(plt)
+            #cut.addToPlot(plt, drawCentroid=True, color="blue", centroidText=False)
             Q -= abs(cut.getCentroid()[1] - self.centroid[1]) * cut.getArea()
 
         if takeIntoAccountStringers:
             for i in self.stringerPolygons[0]:
                 if i.getCentroid()[1] > self.centroid[1]:
                     Q -= abs(i.getCentroid()[1] - self.centroid[1]) * i.getArea()
-
-                    #i.addToPlot(plt)
+                    #i.addToPlot(plt, drawCentroid=True, centroidText=False)
 
         totalSparThickness = sum(self.sparThicknesses)
 
@@ -352,7 +351,6 @@ class WingboxCrossection:
         elif internalTorque >= 0 and Vz <= 0:
             front = abs(taoShear) - abs(qs[0] / self.sparThicknesses[0])
             aft = abs(taoShear) + abs(qs[aftSparIndex] / self.sparThicknesses[aftSparIndex])
-
 
         #plt.gca().set_aspect('equal', adjustable='box')
         #plt.show()

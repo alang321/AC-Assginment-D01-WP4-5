@@ -677,7 +677,9 @@ class Wingbox:
     def drawMaximumNormalStress(self):
         plt.title("Maximum Normal Stress")
         plt.hlines(self.__yieldStrength / 1000000, 0, self.semispan, color="red")
-        plt.plot(self.crossectionYLocations, [max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i])/1000000 for i in range(len(self.crossectionYLocations))])
+        tensile = self.getMaximumTensileStressList()
+        compressive = self.getMaximumCompressiveStressMagnitudeList()
+        plt.plot(self.crossectionYLocations, [max(tensile[i], compressive[i])/1000000 for i in range(len(self.crossectionYLocations))])
         plt.xlabel('semi-span [m]')
         plt.ylabel('stress [MPa]')
 
@@ -686,7 +688,10 @@ class Wingbox:
     def drawNormalStressSafetyMargin(self):
         plt.title("Normal Stress Safety Margin")
         plt.hlines(1, 0, self.semispan, color="red")
-        plt.plot(self.crossectionYLocations, [self.__yieldStrength/max(self.getMaximumTensileStressList()[i], self.getMaximumCompressiveStressMagnitudeList()[i]) for i in self.crossectionYLocations])
+        tensile = self.getMaximumTensileStressList()
+        compressive = self.getMaximumCompressiveStressMagnitudeList()
+        plt.plot(self.crossectionYLocations, [self.__yieldStrength/max(tensile[i], compressive[i], 0.1) for i in range(len(self.crossectionYLocations))])
+        plt.ylim(0, 5)
         plt.xlabel('semi-span [m]')
         plt.ylabel('safety-margin [-]')
 
@@ -697,6 +702,7 @@ class Wingbox:
         plt.hlines(1, 0, self.semispan, color="red")
         edgecrackStrength = AircraftProperties.WingboxMaterial["edge crack strength"]
         plt.plot(self.crossectionYLocations, [edgecrackStrength/i for i in self.getMaximumTensileStressList()])
+        plt.ylim(0, 5)
         plt.xlabel('semi-span [m]')
         plt.ylabel('safety-margin [-]')
 
@@ -707,6 +713,7 @@ class Wingbox:
         plt.hlines(1, 0, self.semispan, color="red")
         centercrackStrength = AircraftProperties.WingboxMaterial["center crack strength"]
         plt.plot(self.crossectionYLocations, [centercrackStrength/i for i in self.getMaximumTensileStressList()])
+        plt.ylim(0, 5)
         plt.xlabel('semi-span [m]')
         plt.ylabel('safety-margin [-]')
 
@@ -828,6 +835,315 @@ class Wingbox:
         plt.ylabel(ylabel=r'thickness [mm]')
 
         plt.show()
+
+    def drawCombinedSparThickness(self):
+        plt.title("Combined Spar Thicknesses")
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+        xVals = doubledList[1:-1]
+        yVals = []
+        for i in doubledList:
+            yVals.append(sum(self.getGeneratedCrosssectionAtY(i).sparThicknesses) * 1000)
+
+        plt.plot(xVals, yVals[2:])
+
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'thickness [mm]')
+
+        plt.show()
+
+    def drawShearWebBucklingSafetyMargin(self):
+        shearList = self.getMaximumShearStressList()
+
+        maxShearPerSection = [[0] * (len(self.ribLocations) - 1),
+                              [0] * (len(self.ribLocations) - 1)]  # list of lists [front, aft]
+
+        aPerSection = []
+        bPerSection = [[], []]
+
+        sidewallIndices = [[0, 1], [2, 3]]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
+
+            # max shear magnitude
+            for i in range(2):
+                # shear
+                if shearList[i][index] > maxShearPerSection[i][sectionIndex]:
+                    maxShearPerSection[i][sectionIndex] = shearList[i][index]
+
+        for sectionIndex in range(len(self.ribLocations) - 1):
+            # a per section
+            aPerSection.append(((self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]) ** 2 + (
+                        self.leadingEdgeXPos(self.ribLocations[sectionIndex + 1]) - self.leadingEdgeXPos(
+                    self.ribLocations[sectionIndex])) ** 2) ** 0.5)
+
+            for i in range(2):
+                # b, spar length at each end
+                outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex]).outsidePolygon
+                dist = abs(
+                    outerPolygon.coords[sidewallIndices[i][0]][1] - outerPolygon.coords[sidewallIndices[i][1]][1])
+                bPerSection[i].append(dist)
+
+        safetyMargin = []
+
+        for sectionIndex in range(len(self.ribLocations) - 1):
+
+            sparThicknesses = [
+                self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex]) / 2),
+                self.spars[0][3]((self.ribLocations[sectionIndex + 1] + self.ribLocations[sectionIndex]) / 2)]
+
+            lower_tau = -1
+            lower_i = 0
+            for i in range(2):
+                ks = bucklingcoeff.shearfuncC(aPerSection[sectionIndex] / bPerSection[i][sectionIndex])
+                tao_cr = min(((np.pi ** 2 * ks * self.__E) / (12 * (1 - self.__poissons ** 2))) * (
+                            sparThicknesses[i] / bPerSection[i][sectionIndex]) ** 2, self.__shearStrength)
+                if tao_cr < lower_tau or lower_tau == -1:
+                    lower_tau = tao_cr
+                    lower_i = i
+            safetyMargin.append(lower_tau/maxShearPerSection[lower_i][sectionIndex])
+
+        plt.title("Shear Buckling Safety Margin")
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+
+        doubledMargin = []
+        for i in safetyMargin:
+            for j in range(2):
+                doubledMargin.append(i)
+
+        xVals = doubledList[1:-1]
+        yVals = doubledMargin
+
+        plt.plot(xVals, yVals)
+        plt.hlines(1, 0, self.semispan, color="red")
+
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'safety-margin [-]')
+        plt.ylim(0, 5)
+
+        plt.show()
+
+    def drawFlangeBucklingSafetyMargin(self):
+        #for checking if flange at top or obttom is in compression
+        if self.wingLoading.getInternalMoment(0)(1) < 0:
+            flangeThickness = self.flangeThicknesses[0]
+            cornerCoords = [0, 3]
+            stringerSideIndex = 0
+            #print("Compression Top")
+        else:
+            flangeThickness = self.flangeThicknesses[1]
+            cornerCoords = [1, 2]
+            stringerSideIndex = 1
+            #print("Compression Bot")
+
+        compressiveStressList = self.getMaximumCompressiveStressMagnitudeList()
+
+        maxCompStressPerSection = [0] * (len(self.ribLocations) - 1)
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
+
+            if compressiveStressList[index] > maxCompStressPerSection[sectionIndex]:
+                maxCompStressPerSection[sectionIndex] = compressiveStressList[index]
+
+        safetyMargin = []
+        for sectionIndex in range(len(self.ribLocations) - 1):
+            #a per section
+            a = self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]
+
+            crossection = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex])
+
+            stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
+            stringerTypes = crossection.stringers[stringerSideIndex]
+            skipNext = False
+
+            lowest_cr = -1
+            for index in range(1, len(stringerPolygons)):
+                if skipNext:
+                    skipNext = False
+                    continue
+
+                indeces = [index, index - 1]
+                clampingCounter = 0
+
+                # check if index is sparcap, if so skip next to true
+                if stringerTypes[index][1].isSparCap:
+                    skipNext = True
+
+                # check if one side is clamping, add to clamping counter
+                for i in indeces:
+                    if stringerTypes[i][1].isClampedAttachment:
+                        clampingCounter += 1
+
+                if clampingCounter == 0: # all sides simply supported
+                    kcFunc = bucklingcoeff.compressionfuncH
+                elif clampingCounter == 1: # one side simply supported, one clamped
+                    kcFunc = bucklingcoeff.compressionfuncC
+                else: #voth sides clamped
+                    kcFunc = bucklingcoeff.compressionfuncCC
+
+                t = flangeThickness(self.ribLocations[sectionIndex + 1])
+
+                # b
+                b = self.__getDistanceBetweenPoints(stringerPolygons[indeces[1]].referencePoints[3], stringerPolygons[indeces[0]].referencePoints[3])
+
+                #check if buckling
+                kc = kcFunc(a / b)
+                stress_cr = ((np.pi**2 * kc * self.__E) / (12 * (1 - self.__poissons**2))) * (t / b) ** 2
+
+                if stress_cr < lowest_cr or lowest_cr == -1:
+                    lowest_cr = stress_cr
+            safetyMargin.append(lowest_cr/maxCompStressPerSection[sectionIndex])
+
+        plt.title("Skin Buckling Safety Margin")
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+
+        doubledMargin = []
+        for i in safetyMargin:
+            for j in range(2):
+                doubledMargin.append(i)
+
+        xVals = doubledList[1:-1]
+        yVals = doubledMargin
+
+        plt.plot(xVals, yVals)
+        plt.hlines(1, 0, self.semispan, color="red")
+
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'safety-margin [-]')
+
+        plt.show()
+
+    def drawColumnBucklingSafetyMargin(self):
+        K = 1 # both ends are pinned
+
+        #for checking if flange at top or obttom is in compression
+        if self.wingLoading.getInternalMoment(0)(1) < 0:
+            stringerSideIndex = 0
+        else:
+            stringerSideIndex = 1
+
+        maxInternalMomentPerSection = [[0, 0] for i in range(len(self.ribLocations))] # [yLoc, Mx]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
+
+            internalMoment = self.wingLoading.getInternalMoment(0)(yLocation)
+            if abs(internalMoment) > abs(maxInternalMomentPerSection[sectionIndex][1]):
+                maxInternalMomentPerSection[sectionIndex] = [yLocation, internalMoment]
+
+        safetyMargin = []
+        for sectionIndex in range(len(self.ribLocations)-1):
+            crossection = self.getGeneratedCrosssectionAtY(maxInternalMomentPerSection[sectionIndex][0])
+
+            stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
+
+            minReqPitch = self.semispan
+            for index, stringer in enumerate(stringerPolygons):
+                for j in range(2):
+                    stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0, x=stringer.referencePoints[j][0], z=stringer.referencePoints[j][1])
+                    force = stress * stringer.getArea()
+                    reqPitch = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(force)))**0.5
+                    if reqPitch < minReqPitch:
+                        minReqPitch = reqPitch
+
+            safetyMargin.append(minReqPitch/self.minRivetPitch[stringerSideIndex][sectionIndex])
+
+        plt.title("Column Buckling Safety Margin")
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+
+        doubledMargin = []
+        for i in safetyMargin:
+            for j in range(2):
+                doubledMargin.append(i)
+
+        xVals = doubledList[1:-1]
+        yVals = doubledMargin
+
+        plt.plot(xVals, yVals)
+        plt.hlines(1, 0, self.semispan, color="red")
+
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'safety-margin [-]')
+
+        plt.show()
+
+    def drawInterRivetBucklingSafetyMargin(self):
+        if self.wingLoading.getInternalMoment(0)(1) < 0:
+            flangeThickness = self.flangeThicknesses[0]
+            side = 0
+        else:
+            flangeThickness = self.flangeThicknesses[1]
+            side = 1
+
+        compressiveStressList = self.getMaximumCompressiveStressMagnitudeList()
+
+        maxCompStressPerSection = [[0, 0] for i in range(len(self.ribLocations))]  # [stress, yLoc]
+
+        for index, yLocation in enumerate(self.crossectionYLocations):
+            sectionIndex = -1
+            for secIndex, loc in enumerate(self.ribLocations):
+                if yLocation >= loc:
+                    sectionIndex = min(secIndex, len(self.ribLocations) - 2)
+
+            stress = compressiveStressList[index]
+            if stress > maxCompStressPerSection[sectionIndex][0]:
+                maxCompStressPerSection[sectionIndex] = [stress, yLocation]
+
+        safetyMargin = []
+        for i in range(len(self.ribLocations) - 1):
+            reqRivetPitch = flangeThickness(maxCompStressPerSection[i][1]) / (
+                    maxCompStressPerSection[i][0] / (0.9 * AircraftProperties.Rivets["c"] * self.__E)) ** 0.5
+            safetyMargin.append(reqRivetPitch/self.minRivetPitch[side][i])
+
+        plt.title("Inter Rivet Buckling safety margin")
+
+        doubledList = []
+        for i in self.ribLocations:
+            for j in range(2):
+                doubledList.append(i)
+
+        doubledMargin = []
+        for i in safetyMargin:
+            for j in range(2):
+                doubledMargin.append(i)
+
+        xVals = doubledList[1:-1]
+        yVals = doubledMargin
+
+        plt.plot(xVals, yVals)
+        plt.hlines(1, 0, self.semispan, color="red")
+
+        plt.xlabel('semi-span [m]')
+        plt.ylabel(ylabel=r'safety-margin [-]')
+
+        plt.show()
+
 
     #endregion
 
