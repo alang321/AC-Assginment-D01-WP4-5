@@ -135,4 +135,7 @@ class AircraftProperties:
     Rivets = {
         "c": 2.1,
     }
+    Misc={
+        "rib weight": 931.82 # kg
+    }
 

@@ -321,7 +321,7 @@ class WingboxCrossection:
         if takeIntoAccountStringers:
             for i in self.stringerPolygons[0]:
                 if i.getCentroid()[1] > self.centroid[1]:
-                    Q -= abs(i.getCentroid()[1] - self.centroid[1]) * i.getArea()
+                    Q += abs(i.getCentroid()[1] - self.centroid[1]) * i.getArea()
                     #i.addToPlot(plt, drawCentroid=True, centroidText=False)
 
         totalSparThickness = sum(self.sparThicknesses)
@@ -355,7 +355,7 @@ class WingboxCrossection:
         #plt.gca().set_aspect('equal', adjustable='box')
         #plt.show()
 
-        return [front, aft]
+        return [abs(front), abs(aft)]
 
     def getBendingStressAtPoint(self, Mx, Mz, x, z):
         return ((self.ixx * Mz - self.izx * Mx)/(self.ixx * self.izz - self.izx**2))*x + ((self.izz * Mx - self.izx * Mz)/(self.ixx * self.izz - self.izx**2))*z

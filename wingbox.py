@@ -112,7 +112,7 @@ class Wingbox:
         self.centroidDistFromC4AtYFunc = self.centroidDistFromC4AtY()
         self.internalVolume, self.materialVolume = self.__getInternalAndMaterialVolume()
 
-        self.totalMass = self.materialVolume * self.__density
+        self.totalMass = self.materialVolume * self.__density + AircraftProperties.Misc["rib weight"]
 
         self.wingLoading = wingLoading
 
@@ -334,14 +334,6 @@ class Wingbox:
 
         internal *= ydist
         material *= ydist
-
-        #rib contributions
-        for i in self.ribLocations:
-            for j in self.getGeneratedCrosssectionAtY(i).insidePolygons:
-                ribVolume = j.getArea() * self.ribThickness
-
-                internal -= ribVolume
-                material += ribVolume
 
         return internal, material
 
