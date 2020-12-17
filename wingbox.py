@@ -37,6 +37,11 @@ class Wingbox:
         self.ribThickness = ribThickness
         self.flangeThicknesses = flangeThicknesses
 
+        self.temp = None
+        self.temp1 = None
+        self.temp2 = None
+        self.temp3 = None
+
         #ribs
         self.ribLocations = []
         for i in ribLocations:
@@ -806,8 +811,8 @@ class Wingbox:
                 yVals.append(self.flangeThicknesses[col](i) * 1000)
             plots[col].plot(xVals, yVals[2:])
             plots[col].set(ylabel=yLabels[col], xlabel='semi-span [m]')
+            plots[col].grid()
         fig.tight_layout(pad=1.5)
-
         plt.show()
 
     def drawSparThickness(self):
@@ -826,7 +831,7 @@ class Wingbox:
 
         plt.xlabel('semi-span [m]')
         plt.ylabel(ylabel=r'thickness [mm]')
-
+        plt.grid()
         plt.show()
 
     def drawCombinedSparThickness(self):
@@ -845,6 +850,7 @@ class Wingbox:
 
         plt.xlabel('semi-span [m]')
         plt.ylabel(ylabel=r'thickness [mm]')
+        plt.grid()
 
         plt.show()
 
@@ -904,6 +910,14 @@ class Wingbox:
             safetyMargin.append(lower_tau/maxShearPerSection[lower_i][sectionIndex])
 
         plt.title("Shear Buckling Safety Margin")
+
+        if self.temp3 is None:
+            self.temp3 = safetyMargin
+        else:
+            for i in range(len(self.temp3)):
+                safetyMargin[i] = min(safetyMargin[i], self.temp3[i])
+
+
 
         doubledList = []
         for i in self.ribLocations:
@@ -1004,6 +1018,12 @@ class Wingbox:
 
         plt.title("Skin Buckling Safety Margin")
 
+        if self.temp2 is None:
+            self.temp2 = safetyMargin
+        else:
+            for i in range(len(self.temp2)):
+                safetyMargin[i] = min(safetyMargin[i], self.temp2[i])
+
         doubledList = []
         for i in self.ribLocations:
             for j in range(2):
@@ -1071,6 +1091,13 @@ class Wingbox:
 
         plt.title("Column Buckling Safety Margin")
 
+        if self.temp1 is None:
+            self.temp1 = safetyMargin
+        else:
+            for i in range(len(self.temp1)):
+                safetyMargin[i] = min(safetyMargin[i], self.temp1[i])
+
+
         doubledList = []
         for i in self.ribLocations:
             for j in range(2):
@@ -1121,6 +1148,12 @@ class Wingbox:
             safetyMargin.append(reqRivetPitch/self.minRivetPitch[side][i])
 
         plt.title("Inter Rivet Buckling safety margin")
+
+        if self.temp is None:
+            self.temp = safetyMargin
+        else:
+            for i in range(len(self.temp)):
+                safetyMargin[i] = min(safetyMargin[i], self.temp[i])
 
         doubledList = []
         for i in self.ribLocations:

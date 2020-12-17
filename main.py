@@ -164,6 +164,7 @@ def checkWingBox(loadingCases, wingbox):
             # plot loading cases
             #plotWingLoading(loading[0])
 
+            wingbox.drawMaximumNormalStress()
             wingbox.drawNormalStressSafetyMargin()
 
             wingbox.drawFlangeBucklingSafetyMargin()
@@ -191,6 +192,9 @@ def checkWingBox(loadingCases, wingbox):
 
             #check normal stress
             max, min = wingbox.getMaximumMinimumNormalStress()
+            print(max)
+            print(max[1].yLocation)
+            print(min)
             if abs(max[0]) > yieldStrength or abs(min[0]) > yieldStrength:
                 print("Max stress", max[0], "at y:", max[1].yLocation, "at point:", max[2])
                 wingbox.drawCrosssection(max[1].yLocation, drawBendingStress=True)
@@ -232,8 +236,6 @@ loadFactor2 = -1
 loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitude, loadFactor2, fuelFactor]]
 
 #wingbox definition start
-
-
 scale = 8
 sideCap = StringerType([[0, 0], [0, -3], [20, -3], [20, -23], [23, -23], [23, 0]], [[0, 0], [23, 0]], rivetPoints=[[3, 0]], isSparCap=True)
 sideCap = sideCap.getScaledStringer(1/1000 * scale)
@@ -248,21 +250,32 @@ extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 outerSparLocations = [0.15, 0.6] # variable
 
-sectionEnds =               [1.05,    2.15,    3.35,   4.6,    5.9,      7.25,     8.6,      10,       11.4,    12.8,   14.2,   15.6,   17,     18.4,   19.9,   21.45,  23,     24.5,   26.5,   28.58] # m
+sectionEnds =               [1.05,    2.15,    3.35,   4.6,    5.9,      7.25,     8.65,     10,       11.4,    12.8,   14.2,   15.6,   17,     18.4,   19.9,   21.45,  23,     24.5,   26.5,   28.58] # m
 #per section
 extraSpars =                [1,       1,       1,      1,      1,        1,        1,        1,        0,       0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0] # m
 sparThicknesses =           [0.0092,  0.0091,  0.009,  0.0089, 0.0086,   0.0084,   0.0081,   0.0078,   0.0082,  0.0078, 0.0074, 0.0068, 0.0066, 0.006,  0.0054, 0.0048, 0.0042, 0.0038, 0.0032, 0.0028]  # m
-flangeThicknessesTop =      [0.018,   0.0163,  0.015,  0.0141, 0.0131,   0.0122,   0.0111,   0.0105,   0.0115,  0.010,  0.0096, 0.0087, 0.0078, 0.0069, 0.0062, 0.0058, 0.0053, 0.0046, 0.0043, 0.0038] # m
-flangeThicknessesBottom =   [0.017,   0.0153,  0.014,  0.0131, 0.0121,   0.0112,   0.0101,   0.0095,   0.0105,  0.009,  0.0086, 0.0072, 0.0067, 0.0059, 0.0045, 0.004,  0.0035, 0.0033, 0.0029, 0.0028] # m
-stringersTop =              [20,      18,      17,     15,     14,       13,       12,       12,       10,      10,     9,      9,      8,      8,      7,      7,      6,      5,      4,      2] # m
-stringersBottom =           [16,      15,      14,     13,     12,       10,       10,       10,       8,       6,      5,      4,      4,      3,      3,      3,      2,      2,      2,      1] # m
+flangeThicknessesTop =      [0.0161,  0.0154,  0.0148, 0.0139, 0.013,    0.0121,   0.0111,   0.011,    0.0109,  0.010,  0.0094, 0.0087, 0.0078, 0.0069, 0.0062, 0.0058, 0.0053, 0.0045, 0.0038, 0.0036] # m
+flangeThicknessesBottom =   [0.0151,  0.0144,  0.0135, 0.0127, 0.0118,   0.0110,   0.0103,   0.0101,   0.0099,  0.009,  0.0084, 0.0072, 0.0067, 0.0058, 0.0043, 0.0038, 0.0035, 0.0031, 0.0027, 0.0027] # m
+stringersTop =              [20,      18,      17,     14,     13,       12,       11,       11,       10,      10,     9,      9,      8,      8,      7,      7,      6,      5,      4,      2] # m
+stringersBottom =           [16,      14,      13,     12,     11,       10,       8,        8,        7,       6,      5,      3,      3,      3,      3,      3,      2,      2,      2,      1] # m
 
-ribThickness = 0.003 # m, set this to the lowest skin thickness value
+
+
+
+
+
+
+
+
+
+ribThickness = 0.003
 
 
 wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stringersTop, stringersBottom=stringersBottom, stringerType=extrudedt, sparCapSide=sideCap, sparCapCenter=centerCap, outerSparLocations=outerSparLocations, extraSpars=extraSpars, sparThicknesses=sparThicknesses, flangeThicknessesTop=flangeThicknessesTop, flangeThicknessesBottom=flangeThicknessesBottom, ribThickness=ribThickness)
 
-wingbox.drawMinimumRivetPitch()
+
+
+#wingbox.drawMinimumRivetPitch()
 wingbox.drawFlangeThickness()
 wingbox.drawCombinedSparThickness()
 
@@ -283,4 +296,3 @@ else:
     print("Doesnt work")
     print("Mass:", wingbox.totalMass, "kg")
     print("Fuel Volume:", wingbox.internalVolume)
-
