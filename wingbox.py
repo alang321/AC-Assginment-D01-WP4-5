@@ -149,7 +149,7 @@ class Wingbox:
                 # b, spar length at each end
                 outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex]).outsidePolygon
                 dist = abs(outerPolygon.coords[sidewallIndices[i][0]][1] - outerPolygon.coords[sidewallIndices[i][1]][1])
-                bPerSection[i].append(dist)
+                bPerSection[i].append(abs(dist - 1.5 * self.sideSparCaps.baseLength))
 
         for sectionIndex in range(len(self.ribLocations)-1):
 
@@ -890,7 +890,7 @@ class Wingbox:
                 outerPolygon = self.getGeneratedCrosssectionAtY(self.ribLocations[sectionIndex]).outsidePolygon
                 dist = abs(
                     outerPolygon.coords[sidewallIndices[i][0]][1] - outerPolygon.coords[sidewallIndices[i][1]][1])
-                bPerSection[i].append(dist)
+                bPerSection[i].append(abs(dist - 1.5 * self.sideSparCaps.baseLength))
 
         safetyMargin = []
 

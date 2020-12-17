@@ -240,20 +240,20 @@ scale = 8
 centerCap = StringerType([[0, 0], [0, -1.5], [21.5, -1.5], [21.5, -23], [23, -23], [23, 0]], [[0, 0], [23, 0]], rivetPoints=[[20, 0]], isSparCap=True)
 centerCap = centerCap.getScaledStringer(1/1000 * scale)
 
-scale = 4
+scale = 3.7
 extrudedt = StringerType([[0, 0], [0, -1.5], [8.5, -1.5], [8.5, -18.5], [3, -18.5], [3, -20], [15.5, -20], [15.5, -18.5], [10, -18.5], [10, -1.5], [18.5, -1.5], [18.5, 0]],       [[0, 0], [18.5, 0]])
 extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 outerSparLocations = [0.15, 0.6] # variable
 
-sectionEnds =               [2,       4,      6,      8,      10.3,     12.6,   15,     17,     19,     21,     23,     30] # m
+sectionEnds =               [1,       2.2,    4,      5.4,    6.9,      8.4,      10,   15,     17,     19,     21,     23,     30] # m
 #per section
-extraSpars =                [1,       1,      1,      1,      1,        0,      0,      0,      0,      0,      0,      0] # m
-sparThicknesses =           [0.007,   0.007,  0.007,  0.006,  0.006,    0.0073, 0.007,  0.0065, 0.0045, 0.0045, 0.0045, 0.0045]  # m
-flangeThicknessesTop =      [0.015,   0.0142, 0.0132, 0.0112, 0.0105,   0.010,  0.009,  0.009,  0.008,  0.003,  0.003,  0.003] # m
-flangeThicknessesBottom =   [0.015,   0.0142, 0.0132, 0.0112, 0.0104,   0.010,  0.009,  0.009,  0.008,  0.003,  0.003,  0.003] # m
-stringersTop =              [25,      30,     26,     26,     18,       16,     11,     9,      8,      1,      1,      0] # m
-stringersBottom =           [15,      20,     16,     16,     14,       12,     6,      6,      3,      1,      0,      0] # m
+extraSpars =                [1,       1,      1,      1,      1,        1,        1,      0,      0,      0,      0,      0,      0] # m
+sparThicknesses =           [0.0075,  0.007,  0.007,  0.006,  0.006,    0.006,    0.0073, 0.007,  0.0065, 0.0045, 0.0045, 0.0045, 0.0045]  # m
+flangeThicknessesTop =      [0.018,   0.015,  0.0122, 0.0112, 0.0112,   0.0105,   0.010,  0.009,  0.009,  0.008,  0.003,  0.003,  0.003] # m
+flangeThicknessesBottom =   [0.017,   0.015,  0.0122, 0.0112, 0.0112,   0.0104,   0.010,  0.009,  0.009,  0.008,  0.003,  0.003,  0.003] # m
+stringersTop =              [20,      18,     26,     26,     18,       18,       16,     11,     9,      8,      1,      1,      0] # m
+stringersBottom =           [16,      15,     16,     16,     14,       14,       12,     6,      6,      3,      1,      0,      0] # m
 
 ribThickness = 0.003 # m, set this to the lowest skin thickness value
 
