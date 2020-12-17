@@ -39,7 +39,7 @@ for speed in range(300):
 # graph plotting
 plt.plot(SpeedValuesSea, AileronEffSea, label='Sea Level')
 plt.plot(SpeedValuesCruise, AileronEffCruise, label='Cruise altitude')
-plt.axvline(x=117.9, color = 'red', linestyle = '--', label = "V_maneuvre")
+plt.axvline(x=117.9, color = 'red', linestyle = '--', label = "Maneuvre speeds")
 plt.axvline(x=191.67, color = 'red', linestyle = '--')
 plt.title('Aileron Effectiveness at Sea Level and Cruise Altitude vs. Velocity')
 plt.xlabel('Velocity [m/s]')
