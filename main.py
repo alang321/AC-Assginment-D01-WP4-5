@@ -233,11 +233,11 @@ loadCases = [[v, weight, altitude, loadFactor1, fuelFactor], [v, weight, altitud
 
 
 scale = 8
-sideCap = StringerType([[0, 0], [0, -2], [18, -2], [18, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]], rivetPoints=[[4, 0]], isSparCap=True)
+sideCap = StringerType([[0, 0], [0, -3], [20, -3], [20, -23], [23, -23], [23, 0]], [[0, 0], [23, 0]], rivetPoints=[[3, 0]], isSparCap=True)
 sideCap = sideCap.getScaledStringer(1/1000 * scale)
 
 scale = 8
-centerCap = StringerType([[0, 0], [0, -1], [19, -1], [19, -20], [20, -20], [20, 0]], [[0, 0], [20, 0]], rivetPoints=[[16, 0]], isSparCap=True)
+centerCap = StringerType([[0, 0], [0, -1.5], [21.5, -1.5], [21.5, -23], [23, -23], [23, 0]], [[0, 0], [23, 0]], rivetPoints=[[20, 0]], isSparCap=True)
 centerCap = centerCap.getScaledStringer(1/1000 * scale)
 
 scale = 4
@@ -246,14 +246,14 @@ extrudedt = extrudedt.getScaledStringer((1/1000)*scale)
 
 outerSparLocations = [0.15, 0.6] # variable
 
-sectionEnds =               [2,       4,      6,      8,      10.3,     12.6,   15,     17.5,   20,     22.5,   25.5,   30] # m
+sectionEnds =               [2,       4,      6,      8,      10.3,     12.6,   15,     17,     19,     21,     23,     30] # m
 #per section
 extraSpars =                [1,       1,      1,      1,      1,        0,      0,      0,      0,      0,      0,      0] # m
-sparThicknesses =           [0.007,   0.007,  0.007,  0.006,  0.006,    0.0073, 0.007,  0.006,  0.0045, 0.0045, 0.0045, 0.0045]  # m
-flangeThicknessesTop =      [0.015,   0.0142, 0.0132, 0.0112, 0.0105,   0.010,  0.009,  0.0065, 0.0049, 0.003,  0.003,  0.003] # m
-flangeThicknessesBottom =   [0.015,   0.0142, 0.0132, 0.0112, 0.0104,   0.010,  0.009,  0.0065, 0.0049, 0.003,  0.003,  0.003] # m
-stringersTop =              [35,      30,     26,     26,     18,       16,     11,     7,      3,      1,      1,      0] # m
-stringersBottom =           [25,      20,     16,     16,     14,       12,     6,      6,      2,      1,      0,      0] # m
+sparThicknesses =           [0.007,   0.007,  0.007,  0.006,  0.006,    0.0073, 0.007,  0.0065, 0.0045, 0.0045, 0.0045, 0.0045]  # m
+flangeThicknessesTop =      [0.015,   0.0142, 0.0132, 0.0112, 0.0105,   0.010,  0.009,  0.009,  0.008,  0.003,  0.003,  0.003] # m
+flangeThicknessesBottom =   [0.015,   0.0142, 0.0132, 0.0112, 0.0104,   0.010,  0.009,  0.009,  0.008,  0.003,  0.003,  0.003] # m
+stringersTop =              [25,      30,     26,     26,     18,       16,     11,     9,      8,      1,      1,      0] # m
+stringersBottom =           [15,      20,     16,     16,     14,       12,     6,      6,      3,      1,      0,      0] # m
 
 ribThickness = 0.003 # m, set this to the lowest skin thickness value
 
@@ -263,7 +263,6 @@ wingbox = wingboxLayoutHelper(sectionEndLocations=sectionEnds, stringersTop=stri
 
 wingbox.drawMinimumRivetPitch()
 wingbox.drawFlangeThickness()
-wingbox.drawSparThickness()
 wingbox.drawCombinedSparThickness()
 
 print(wingbox.totalMass)
@@ -271,9 +270,9 @@ print("Fuel Volume:", wingbox.internalVolume)
 
 # draw wingbox
 wingbox.draw(drawBottomStringers=False)
-wingbox.drawCrosssection(2.5, drawCentroid=True, drawSidewallCenterlines=True)
-wingbox.getGeneratedCrosssectionAtY(2.5).getMaxShearStress(0, 0)
-wingbox.drawInertias()
+#wingbox.drawCrosssection(2.5, drawCentroid=True, drawSidewallCenterlines=True)
+#wingbox.getGeneratedCrosssectionAtY(2.5).getMaxShearStress(0, 0)
+#wingbox.drawInertias()
 
 if checkWingBox(loadCases, wingbox):
     print("YAY it worked")

@@ -267,19 +267,20 @@ class Wingbox:
 
             stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
 
-            minReqPitch = self.semispan
+            minReqDistance = self.semispan
             for index, stringer in enumerate(stringerPolygons):
                 for j in range(2):
                     stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0, x=stringer.referencePoints[j][0], z=stringer.referencePoints[j][1])
                     force = stress * stringer.getArea()
-                    reqPitch = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(force)))**0.5
-                    if reqPitch < minReqPitch:
-                        minReqPitch = reqPitch
+                    reqDistance = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(force)))**0.5
+                    if reqDistance < minReqDistance:
+                        minReqDistance = reqDistance
 
             #print(sectionIndex, "Column Buckling")
             #print(minReqPitch, "<", self.minRivetPitch[stringerSideIndex][sectionIndex])
-            if minReqPitch < self.minRivetPitch[stringerSideIndex][sectionIndex]:
-                print("Required rivet pitch for Column Buckling of", str(minReqPitch*1000), "[mm] is lower than minimum allowable pitch of", str(self.minRivetPitch[stringerSideIndex][sectionIndex] * 1000), "[mm] in section", str(sectionIndex + 1), ".")
+            a = self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]
+            if minReqDistance < a:
+                print("Required rib distance for Column Buckling of", str(minReqDistance), "[m] is lower than rib distance of", str(a), "[m] in section", str(sectionIndex + 1), ".")
                 return True
 
         return False
@@ -1059,16 +1060,22 @@ class Wingbox:
 
             stringerPolygons = crossection.stringerPolygons[stringerSideIndex]
 
-            minReqPitch = self.semispan
+            minReqDistance = self.semispan
             for index, stringer in enumerate(stringerPolygons):
                 for j in range(2):
-                    stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0, x=stringer.referencePoints[j][0], z=stringer.referencePoints[j][1])
+                    stress = crossection.getBendingStressAtPoint(Mx=maxInternalMomentPerSection[sectionIndex][1], Mz=0,
+                                                                 x=stringer.referencePoints[j][0],
+                                                                 z=stringer.referencePoints[j][1])
                     force = stress * stringer.getArea()
-                    reqPitch = ((K * np.pi**2 * self.__E * stringer.getIxx())/(abs(force)))**0.5
-                    if reqPitch < minReqPitch:
-                        minReqPitch = reqPitch
+                    reqDistance = ((K * np.pi ** 2 * self.__E * stringer.getIxx()) / (abs(force))) ** 0.5
+                    if reqDistance < minReqDistance:
+                        minReqDistance = reqDistance
 
-            safetyMargin.append(minReqPitch/self.minRivetPitch[stringerSideIndex][sectionIndex])
+            # print(sectionIndex, "Column Buckling")
+            # print(minReqPitch, "<", self.minRivetPitch[stringerSideIndex][sectionIndex])
+            a = self.ribLocations[sectionIndex + 1] - self.ribLocations[sectionIndex]
+
+            safetyMargin.append(minReqDistance/a)
 
         plt.title("Column Buckling Safety Margin")
 
